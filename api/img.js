@@ -10,7 +10,8 @@ export default async function handler(req, res) {
 
   if (!f) return res.status(400).end('Missing filename');
 
-  // Block direct access — must be requested from your own domain
+  // Only block requests that explicitly come from a different domain.
+  // Don't block requests with no referrer — browsers often omit it.
   const referrer = req.headers['referer'] || req.headers['referrer'] || '';
   const host = req.headers['host'] || '';
   if (referrer && !referrer.includes(host)) {
