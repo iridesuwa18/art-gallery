@@ -126,56 +126,7 @@ async function attemptAuth() {
   authSubmit.disabled = false;
 }
 
-// ─── GITHUB SETTINGS VALIDATION ──────────────────────────────
-function githubSettingsValid() {
-  return ghOwner.value.trim() !== '' && ghRepo.value.trim() !== '';
-}
-
-function assertGithubSettings() {
-  if (!githubSettingsValid()) {
-    // Open the details block and show the hint
-    document.getElementById('githubSettings').open = true;
-    const hint = document.getElementById('ghSettingsHint');
-    hint.style.display = 'block';
-    ghOwner.focus();
-    return false;
-  }
-  document.getElementById('ghSettingsHint').style.display = 'none';
-  return true;
-}
-
-// Hide hint once user fills in the fields
-[ghOwner, ghRepo].forEach(el => {
-  el.addEventListener('input', () => {
-    if (githubSettingsValid()) {
-      document.getElementById('ghSettingsHint').style.display = 'none';
-    }
-  });
-});
-
-// ─── EYE TOGGLE ───────────────────────────────────────────────
-function initEyeToggles() {
-  document.querySelectorAll('.eye-btn').forEach(btn => {
-    const targetId = btn.dataset.target;
-    const input = document.getElementById(targetId);
-    if (!input) return;
-
-    // Start as masked (type=password)
-    input.type = 'password';
-    let visible = false;
-
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      visible = !visible;
-      input.type = visible ? 'text' : 'password';
-      // Toggle slash through eye
-      const slash = btn.querySelector('.eye-slash');
-      if (slash) slash.style.display = visible ? 'none' : '';
-    });
-  });
-}
-
-
+// ─── EDITOR ──────────────────────────────────────────────────
 function showEditor() {
   adminAuth.style.display = 'none';
   adminEditor.style.display = 'block';
@@ -190,7 +141,6 @@ function showEditor() {
   ghRepo.value   = localConfig.githubRepo  || '';
   ghBranch.value = localConfig.githubBranch || 'main';
 
-  initEyeToggles();
   renderPagesList();
 }
 
@@ -289,8 +239,6 @@ addPageBtn.addEventListener('click', () => {
 saveConfigBtn.addEventListener('click', saveConfig);
 
 async function saveConfig() {
-  if (!assertGithubSettings()) return;
-
   // Update github settings from fields
   localConfig.githubOwner  = ghOwner.value.trim();
   localConfig.githubRepo   = ghRepo.value.trim();
@@ -328,8 +276,6 @@ async function saveConfig() {
 
 // ─── UPLOAD MODAL ─────────────────────────────────────────────
 function openUploadModal(pageId) {
-  if (!assertGithubSettings()) return;
-
   pendingPageId = pageId;
   uploadFile    = null;
 
@@ -409,10 +355,10 @@ uploadSubmit.addEventListener('click', doUpload);
 async function doUpload() {
   if (!uploadFile) { alert('Please select an image first.'); return; }
 
-  const title      = artTitle.value.trim() || 'Untitled';
-  const date       = artDate.value;
-  const desc       = artDesc.value.trim();
-  const textPos    = artTextPos.value;
+  const title   = artTitle.value.trim() || 'Untitled';
+  const date    = artDate.value;
+  const desc    = artDesc.value.trim();
+  const textPos = artTextPos.value;
 
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = 'Uploading…';
@@ -420,37 +366,54 @@ async function doUpload() {
   setProgress(10, 'Reading file…');
 
   try {
-    // Convert file to base64
-    const base64 = await fileToBase64(uploadFile);
-    setProgress(30, 'Uploading to GitHub…');
+    // Compress image on canvas before encoding — keeps payload under Vercel's 4.5 MB body limit
+    setProgress(20, 'Compressing image…');
+    const { dataUrl, mimeType } = await compressImage(uploadFile, {
+      maxW: 2400, maxH: 2400, quality: 0.88
+    });
+    setProgress(35, 'Uploading to GitHub…');
 
     const extMatch = uploadFile.name.match(/\.[^.]+$/);
-    const ext = extMatch ? extMatch[0].toLowerCase() : '';
+    const origExt  = extMatch ? extMatch[0].toLowerCase() : '';
+    // PNG stays PNG; everything else becomes JPEG after canvas compression
+    const finalExt = (mimeType === 'image/png') ? origExt : '.jpg';
+
     const baseName = artFilename.value.trim()
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') || 'artwork';
-    const filename = baseName + ext;
+    const filename = baseName + finalExt;
 
     const res = await fetch('/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         filename,
-        base64Content: base64.split(',')[1], // strip data:image/... prefix
-        mimeType: uploadFile.type
+        base64Content: dataUrl.split(',')[1],
+        mimeType
       })
     });
 
-    setProgress(70, 'Processing…');
-    const data = await res.json();
+    setProgress(75, 'Processing…');
+
+    // Read as text first so a non-JSON error body gives a clear message
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error(
+        res.status === 413
+          ? 'Image too large for server (413). Try a smaller file.'
+          : `Server returned non-JSON (${res.status}): ${raw.slice(0, 120)}`
+      );
+    }
 
     if (!data.ok) throw new Error(data.error || 'Upload failed');
 
     setProgress(90, 'Adding to artbook…');
 
-    // Add artwork to the target page in localConfig
     const targetPage = localConfig.pages.find(p => p.id === pendingPageId);
     if (targetPage) {
       if (!targetPage.artworks) targetPage.artworks = [];
@@ -479,20 +442,42 @@ async function doUpload() {
   }
 }
 
+// Compress an image File to a data URL via canvas.
+// Keeps aspect ratio within maxW×maxH; PNGs are kept as PNG, others as JPEG.
+function compressImage(file, { maxW = 2400, maxH = 2400, quality = 0.88 } = {}) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxW || height > maxH) {
+        const scale = Math.min(maxW / width, maxH / height);
+        width  = Math.round(width  * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const isPng   = file.type === 'image/png';
+      const outMime = isPng ? 'image/png' : 'image/jpeg';
+      const dataUrl = canvas.toDataURL(outMime, isPng ? undefined : quality);
+      resolve({ dataUrl, mimeType: outMime });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not load image')); };
+    img.src = url;
+  });
+}
+
 function setProgress(pct, label) {
   progressFill.style.width = pct + '%';
   progressLabel.textContent = label;
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function sanitizeFilename(name) {
   return name
