@@ -872,6 +872,30 @@ select.admin-input { cursor: pointer; }
   background: var(--bg-2);
 }
 
+.filename-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.filename-row .admin-input {
+  border-radius: var(--radius) 0 0 var(--radius);
+  flex: 1;
+  border-right: none;
+}
+.filename-ext {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--text-faint);
+  height: 34px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* ─── UPLOAD MODAL ───────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
@@ -887,10 +911,12 @@ select.admin-input { cursor: pointer; }
 
 .upload-modal {
   width: min(520px, 95vw);
+  max-height: 90dvh;
   background: var(--surface);
   border-radius: 4px;
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   animation: scaleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
