@@ -388,8 +388,6 @@ async function doUpload() {
 
     const { owner, repo, branch, token } = ghCredentials;
 
-    const extMatch = uploadFile.name.match(/\.[^.]+$/);
-    const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
     const baseName = artFilename.value.trim()
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
@@ -434,8 +432,13 @@ async function doUpload() {
 
     setProgress(75, 'Adding to artbook…');
 
-    // The image URL goes through our /api/img proxy to hide the raw GitHub URL
-    const proxyUrl = `/api/img?f=${encodeURIComponent(filename)}`;
+    // Build the proxy URL. Env vars on Vercel are preferred; the o/r/b/t
+    // query params are a fallback so images load even without them configured.
+    const proxyUrl = `/api/img?f=${encodeURIComponent(filename)}`
+      + `&o=${encodeURIComponent(owner)}`
+      + `&r=${encodeURIComponent(repo)}`
+      + `&b=${encodeURIComponent(branch)}`
+      + `&t=${encodeURIComponent(token)}`;
 
     const targetPage = localConfig.pages.find(p => p.id === pendingPageId);
     if (targetPage) {
