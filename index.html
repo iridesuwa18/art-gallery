@@ -101,18 +101,34 @@
         <div class="editor-body">
 
           <!-- GitHub Settings -->
-          <details class="settings-block" id="githubSettings">
-            <summary class="settings-title">GitHub Settings</summary>
+          <details class="settings-block" id="githubSettings" open>
+            <summary class="settings-title">GitHub Settings <span class="settings-required-note">Required to save &amp; upload</span></summary>
             <div class="settings-fields">
-              <label class="field-label">GitHub Owner (username)
-                <input type="text" class="admin-input sm" id="ghOwner" placeholder="yourusername">
+              <label class="field-label">GitHub Owner (username) <span class="req-star">*</span>
+                <div class="input-eye-row">
+                  <input type="text" class="admin-input sm" id="ghOwner" placeholder="yourusername" autocomplete="off">
+                  <button type="button" class="eye-btn" data-target="ghOwner" title="Show/hide">
+                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
               </label>
-              <label class="field-label">Repository Name
-                <input type="text" class="admin-input sm" id="ghRepo" placeholder="artbook">
+              <label class="field-label">Repository Name <span class="req-star">*</span>
+                <div class="input-eye-row">
+                  <input type="text" class="admin-input sm" id="ghRepo" placeholder="artbook" autocomplete="off">
+                  <button type="button" class="eye-btn" data-target="ghRepo" title="Show/hide">
+                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
               </label>
               <label class="field-label">Branch
-                <input type="text" class="admin-input sm" id="ghBranch" placeholder="main">
+                <div class="input-eye-row">
+                  <input type="text" class="admin-input sm" id="ghBranch" placeholder="main" autocomplete="off">
+                  <button type="button" class="eye-btn" data-target="ghBranch" title="Show/hide">
+                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
               </label>
+              <p class="gh-settings-hint" id="ghSettingsHint" style="display:none">⚠ GitHub Owner and Repository are required before you can save or upload.</p>
             </div>
           </details>
 
