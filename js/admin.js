@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
    admin.js — Admin Panel
    Hidden admin panel (double-click logo) with:
-   - Password auth via /api/auth
+   - Password + GitHub credentials at login
    - GitHub image upload via /api/upload
-   - Config save via /api/config
+   - Config save via /api/config (auto-save on upload + manual publish)
 ═══════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -14,6 +14,9 @@ let pendingPageId  = null; // which page we're adding an artwork to
 let localConfig    = null; // working copy of artbook.json
 let uploadFile     = null; // file staged for upload
 
+// GitHub credentials captured at login
+let ghCredentials = { owner: '', repo: '', branch: 'main' };
+
 // ─── DOM ─────────────────────────────────────────────────────
 const logo         = document.getElementById('siteLogo');
 const adminOverlay = document.getElementById('adminOverlay');
@@ -22,17 +25,15 @@ const adminEditor  = document.getElementById('adminEditor');
 const adminClose   = document.getElementById('adminClose');
 const editorClose  = document.getElementById('editorClose');
 const authPassword = document.getElementById('authPassword');
+const authGhOwner  = document.getElementById('authGhOwner');
+const authGhRepo   = document.getElementById('authGhRepo');
+const authGhBranch = document.getElementById('authGhBranch');
 const authSubmit   = document.getElementById('authSubmit');
 const authError    = document.getElementById('authError');
 
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 const addPageBtn    = document.getElementById('addPageBtn');
 const pagesList     = document.getElementById('pagesList');
-
-// GitHub settings fields
-const ghOwner  = document.getElementById('ghOwner');
-const ghRepo   = document.getElementById('ghRepo');
-const ghBranch = document.getElementById('ghBranch');
 
 // Upload modal
 const uploadOverlay = document.getElementById('uploadOverlay');
@@ -91,13 +92,17 @@ adminOverlay.addEventListener('click', (e) => {
 
 // ─── AUTH ─────────────────────────────────────────────────────
 authSubmit.addEventListener('click', attemptAuth);
-authPassword.addEventListener('keydown', e => {
-  if (e.key === 'Enter') attemptAuth();
+[authPassword, authGhOwner, authGhRepo, authGhBranch].forEach(el => {
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') attemptAuth(); });
 });
 
 async function attemptAuth() {
-  const pw = authPassword.value.trim();
-  if (!pw) return;
+  const pw    = authPassword.value.trim();
+  const owner = authGhOwner.value.trim();
+  const repo  = authGhRepo.value.trim();
+
+  if (!pw) { authError.textContent = 'Please enter your password.'; return; }
+  if (!owner || !repo) { authError.textContent = 'GitHub Owner and Repository are required.'; return; }
 
   authSubmit.textContent = '…';
   authSubmit.disabled = true;
@@ -113,6 +118,12 @@ async function attemptAuth() {
     const data = await res.json();
 
     if (data.ok) {
+      // Store credentials for use in upload/save
+      ghCredentials = {
+        owner,
+        repo,
+        branch: authGhBranch.value.trim() || 'main'
+      };
       adminUnlocked = true;
       showEditor();
     } else {
@@ -126,7 +137,6 @@ async function attemptAuth() {
   authSubmit.disabled = false;
 }
 
-// ─── EDITOR ──────────────────────────────────────────────────
 function showEditor() {
   adminAuth.style.display = 'none';
   adminEditor.style.display = 'block';
@@ -136,10 +146,10 @@ function showEditor() {
   localConfig = JSON.parse(JSON.stringify(viewer.getArtbook() || { pages: [] }));
   if (!localConfig.pages) localConfig.pages = [];
 
-  // Populate GitHub settings
-  ghOwner.value  = localConfig.githubOwner || '';
-  ghRepo.value   = localConfig.githubRepo  || '';
-  ghBranch.value = localConfig.githubBranch || 'main';
+  // Seed config with credentials from login
+  localConfig.githubOwner  = ghCredentials.owner;
+  localConfig.githubRepo   = ghCredentials.repo;
+  localConfig.githubBranch = ghCredentials.branch;
 
   renderPagesList();
 }
@@ -231,21 +241,22 @@ addPageBtn.addEventListener('click', () => {
   };
   localConfig.pages.push(newPage);
   renderPagesList();
-  // Scroll to bottom of pages list
   pagesList.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-// ─── SAVE CONFIG ─────────────────────────────────────────────
+// ─── SAVE / PUBLISH CONFIG ────────────────────────────────────
 saveConfigBtn.addEventListener('click', saveConfig);
 
-async function saveConfig() {
-  // Update github settings from fields
-  localConfig.githubOwner  = ghOwner.value.trim();
-  localConfig.githubRepo   = ghRepo.value.trim();
-  localConfig.githubBranch = ghBranch.value.trim() || 'main';
+async function saveConfig(silent = false) {
+  // Ensure credentials are always current
+  localConfig.githubOwner  = ghCredentials.owner;
+  localConfig.githubRepo   = ghCredentials.repo;
+  localConfig.githubBranch = ghCredentials.branch;
 
-  saveConfigBtn.textContent = 'Saving…';
-  saveConfigBtn.disabled = true;
+  if (!silent) {
+    saveConfigBtn.textContent = 'Publishing…';
+    saveConfigBtn.disabled = true;
+  }
 
   try {
     const res = await fetch('/api/config', {
@@ -257,21 +268,23 @@ async function saveConfig() {
     const data = await res.json();
 
     if (data.ok) {
-      // Update the viewer in-memory
       window._artbookViewer.setArtbook(localConfig);
       window._artbookViewer.rerender();
-      saveConfigBtn.textContent = '✓ Saved';
-      setTimeout(() => { saveConfigBtn.textContent = 'Save All'; }, 2000);
+      if (!silent) {
+        saveConfigBtn.textContent = '✓ Published';
+        setTimeout(() => { saveConfigBtn.textContent = 'Publish'; }, 2000);
+      }
+      return true;
     } else {
-      alert('Save failed: ' + (data.error || 'unknown error'));
-      saveConfigBtn.textContent = 'Save All';
+      if (!silent) alert('Publish failed: ' + (data.error || 'unknown error'));
+      return false;
     }
   } catch(e) {
-    alert('Save failed: ' + e.message);
-    saveConfigBtn.textContent = 'Save All';
+    if (!silent) alert('Publish failed: ' + e.message);
+    return false;
+  } finally {
+    if (!silent) saveConfigBtn.disabled = false;
   }
-
-  saveConfigBtn.disabled = false;
 }
 
 // ─── UPLOAD MODAL ─────────────────────────────────────────────
@@ -321,18 +334,17 @@ dropZone.addEventListener('drop', e => {
 function stageFile(file) {
   uploadFile = file;
 
-  // Set extension display and auto-fill filename from file name
   const extMatch = file.name.match(/\.[^.]+$/);
   const ext = extMatch ? extMatch[0].toLowerCase() : '';
   filenameExt.textContent = ext;
 
   if (!artFilename.value) {
     artFilename.value = file.name
-      .replace(/\.[^.]+$/, '')       // strip extension
+      .replace(/\.[^.]+$/, '')
       .replace(/[-_]/g, ' ')
       .toLowerCase()
-      .replace(/\s+/g, '-')          // spaces to dashes
-      .replace(/[^a-z0-9-]/g, '');   // strip non-slug chars
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
   }
 
   const reader = new FileReader();
@@ -343,7 +355,6 @@ function stageFile(file) {
   };
   reader.readAsDataURL(file);
 
-  // Auto-fill title from original filename if empty
   if (!artTitle.value) {
     artTitle.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
   }
@@ -366,66 +377,54 @@ async function doUpload() {
   setProgress(10, 'Reading file…');
 
   try {
-    // Compress image on canvas before encoding — keeps payload under Vercel's 4.5 MB body limit
-    setProgress(20, 'Compressing image…');
-    const { dataUrl, mimeType } = await compressImage(uploadFile, {
-      maxW: 2400, maxH: 2400, quality: 0.88
-    });
-    setProgress(35, 'Uploading to GitHub…');
+    const base64 = await fileToBase64(uploadFile);
+    setProgress(30, 'Uploading to GitHub…');
 
     const extMatch = uploadFile.name.match(/\.[^.]+$/);
-    const origExt  = extMatch ? extMatch[0].toLowerCase() : '';
-    // PNG stays PNG; everything else becomes JPEG after canvas compression
-    const finalExt = (mimeType === 'image/png') ? origExt : '.jpg';
-
+    const ext = extMatch ? extMatch[0].toLowerCase() : '';
     const baseName = artFilename.value.trim()
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') || 'artwork';
-    const filename = baseName + finalExt;
+    const filename = baseName + ext;
 
     const res = await fetch('/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         filename,
-        base64Content: dataUrl.split(',')[1],
-        mimeType
+        base64Content: base64.split(',')[1],
+        mimeType: uploadFile.type
       })
     });
 
-    setProgress(75, 'Processing…');
-
-    // Read as text first so a non-JSON error body gives a clear message
-    const raw = await res.text();
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      throw new Error(
-        res.status === 413
-          ? 'Image too large for server (413). Try a smaller file.'
-          : `Server returned non-JSON (${res.status}): ${raw.slice(0, 120)}`
-      );
-    }
+    setProgress(70, 'Processing…');
+    const data = await res.json();
 
     if (!data.ok) throw new Error(data.error || 'Upload failed');
 
-    setProgress(90, 'Adding to artbook…');
+    setProgress(85, 'Adding to artbook…');
 
+    // Add artwork to the target page in localConfig
     const targetPage = localConfig.pages.find(p => p.id === pendingPageId);
     if (targetPage) {
       if (!targetPage.artworks) targetPage.artworks = [];
       targetPage.artworks.push({
-        id: 'art_' + Date.now(),
-        url: data.url,
+        id:           'art_' + Date.now(),
+        url:          data.url,
         title,
         date,
-        description: desc,
+        description:  desc,
         textPosition: textPos
       });
     }
+
+    setProgress(92, 'Saving…');
+
+    // Auto-save so the page shows immediately
+    const saved = await saveConfig(true);
+    if (!saved) throw new Error('Config save failed after upload');
 
     setProgress(100, 'Done!');
 
@@ -442,48 +441,19 @@ async function doUpload() {
   }
 }
 
-// Compress an image File to a data URL via canvas.
-// Keeps aspect ratio within maxW×maxH; PNGs are kept as PNG, others as JPEG.
-function compressImage(file, { maxW = 2400, maxH = 2400, quality = 0.88 } = {}) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      let { width, height } = img;
-      if (width > maxW || height > maxH) {
-        const scale = Math.min(maxW / width, maxH / height);
-        width  = Math.round(width  * scale);
-        height = Math.round(height * scale);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width  = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const isPng   = file.type === 'image/png';
-      const outMime = isPng ? 'image/png' : 'image/jpeg';
-      const dataUrl = canvas.toDataURL(outMime, isPng ? undefined : quality);
-      resolve({ dataUrl, mimeType: outMime });
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not load image')); };
-    img.src = url;
-  });
-}
-
 function setProgress(pct, label) {
   progressFill.style.width = pct + '%';
   progressLabel.textContent = label;
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
-
-function sanitizeFilename(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, '-')
-    .replace(/-+/g, '-');
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function esc(str) {
