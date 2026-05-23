@@ -42,6 +42,8 @@ const fileInput     = document.getElementById('fileInput');
 const browseBtn     = document.getElementById('browseBtn');
 const dropInner     = document.getElementById('dropInner');
 const uploadPreview = document.getElementById('uploadPreview');
+const artFilename   = document.getElementById('artFilename');
+const filenameExt   = document.getElementById('filenameExt');
 const artTitle      = document.getElementById('artTitle');
 const artDate       = document.getElementById('artDate');
 const artDesc       = document.getElementById('artDesc');
@@ -278,6 +280,8 @@ function openUploadModal(pageId) {
   uploadFile    = null;
 
   // Reset form
+  artFilename.value = '';
+  filenameExt.textContent = '.jpg';
   artTitle.value = '';
   artDate.value  = new Date().toISOString().slice(0, 10);
   artDesc.value  = '';
@@ -316,6 +320,21 @@ dropZone.addEventListener('drop', e => {
 
 function stageFile(file) {
   uploadFile = file;
+
+  // Set extension display and auto-fill filename from file name
+  const extMatch = file.name.match(/\.[^.]+$/);
+  const ext = extMatch ? extMatch[0].toLowerCase() : '';
+  filenameExt.textContent = ext;
+
+  if (!artFilename.value) {
+    artFilename.value = file.name
+      .replace(/\.[^.]+$/, '')       // strip extension
+      .replace(/[-_]/g, ' ')
+      .toLowerCase()
+      .replace(/\s+/g, '-')          // spaces to dashes
+      .replace(/[^a-z0-9-]/g, '');   // strip non-slug chars
+  }
+
   const reader = new FileReader();
   reader.onload = evt => {
     uploadPreview.src = evt.target.result;
@@ -324,7 +343,7 @@ function stageFile(file) {
   };
   reader.readAsDataURL(file);
 
-  // Auto-fill title from filename
+  // Auto-fill title from original filename if empty
   if (!artTitle.value) {
     artTitle.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
   }
@@ -351,7 +370,14 @@ async function doUpload() {
     const base64 = await fileToBase64(uploadFile);
     setProgress(30, 'Uploading to GitHub…');
 
-    const filename = sanitizeFilename(uploadFile.name);
+    const extMatch = uploadFile.name.match(/\.[^.]+$/);
+    const ext = extMatch ? extMatch[0].toLowerCase() : '';
+    const baseName = artFilename.value.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'artwork';
+    const filename = baseName + ext;
 
     const res = await fetch('/api/upload', {
       method: 'POST',
