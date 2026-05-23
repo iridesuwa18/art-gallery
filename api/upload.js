@@ -12,14 +12,14 @@
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '8mb',
+      sizeLimit: '6mb', // base64 of a ~4mb image; Vercel hobby hard cap is ~4.5mb raw
     },
   },
 };
 
 export default async function handler(req, res) {
-  // Allow large bodies — Vercel default is 1mb, images can be bigger
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
