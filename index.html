@@ -82,7 +82,18 @@
           <button class="panel-close" id="adminClose">✕</button>
         </div>
         <div class="auth-form">
-          <input type="password" class="admin-input" id="authPassword" placeholder="Password" autocomplete="current-password">
+          <label class="auth-field-label">Password
+            <input type="password" class="admin-input" id="authPassword" placeholder="Admin password" autocomplete="current-password">
+          </label>
+          <label class="auth-field-label">GitHub Owner
+            <input type="text" class="admin-input" id="authGhOwner" placeholder="your-username" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="auth-field-label">Repository
+            <input type="text" class="admin-input" id="authGhRepo" placeholder="artbook" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="auth-field-label">Branch
+            <input type="text" class="admin-input" id="authGhBranch" placeholder="main" autocomplete="off" spellcheck="false">
+          </label>
           <button class="admin-btn primary" id="authSubmit">Unlock</button>
           <p class="auth-error" id="authError"></p>
         </div>
@@ -93,44 +104,12 @@
         <div class="admin-panel-header">
           <span class="admin-panel-title">Artbook Editor</span>
           <div class="panel-header-actions">
-            <button class="admin-btn save-btn" id="saveConfigBtn">Save All</button>
+            <button class="admin-btn save-btn" id="saveConfigBtn">Publish</button>
             <button class="panel-close" id="editorClose">✕</button>
           </div>
         </div>
 
         <div class="editor-body">
-
-          <!-- GitHub Settings -->
-          <details class="settings-block" id="githubSettings" open>
-            <summary class="settings-title">GitHub Settings <span class="settings-required-note">Required to save &amp; upload</span></summary>
-            <div class="settings-fields">
-              <label class="field-label">GitHub Owner (username) <span class="req-star">*</span>
-                <div class="input-eye-row">
-                  <input type="text" class="admin-input sm" id="ghOwner" placeholder="yourusername" autocomplete="off">
-                  <button type="button" class="eye-btn" data-target="ghOwner" title="Show/hide">
-                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                  </button>
-                </div>
-              </label>
-              <label class="field-label">Repository Name <span class="req-star">*</span>
-                <div class="input-eye-row">
-                  <input type="text" class="admin-input sm" id="ghRepo" placeholder="artbook" autocomplete="off">
-                  <button type="button" class="eye-btn" data-target="ghRepo" title="Show/hide">
-                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                  </button>
-                </div>
-              </label>
-              <label class="field-label">Branch
-                <div class="input-eye-row">
-                  <input type="text" class="admin-input sm" id="ghBranch" placeholder="main" autocomplete="off">
-                  <button type="button" class="eye-btn" data-target="ghBranch" title="Show/hide">
-                    <svg class="eye-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/><line class="eye-slash" x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                  </button>
-                </div>
-              </label>
-              <p class="gh-settings-hint" id="ghSettingsHint" style="display:none">⚠ GitHub Owner and Repository are required before you can save or upload.</p>
-            </div>
-          </details>
 
           <!-- Pages list -->
           <div class="pages-manager">
