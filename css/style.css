@@ -739,6 +739,70 @@ select.admin-input { cursor: pointer; }
   gap: 6px;
 }
 
+/* ─── EYE TOGGLE / INPUT ROW ─────────────────────────────── */
+.input-eye-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.input-eye-row .admin-input {
+  flex: 1;
+  min-width: 0;
+}
+.eye-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  padding: 0;
+}
+.eye-btn:hover {
+  color: var(--text-mid);
+  border-color: var(--text-faint);
+}
+.eye-icon {
+  width: 15px;
+  height: 15px;
+}
+.eye-slash {
+  display: '';
+}
+
+/* ─── REQUIRED STAR & HINT ───────────────────────────────── */
+.req-star {
+  color: var(--accent, #b06040);
+  margin-left: 2px;
+  font-size: 11px;
+}
+.settings-required-note {
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: var(--text-faint);
+  margin-left: 8px;
+  opacity: 0.75;
+}
+.gh-settings-hint {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #c0704a;
+  background: color-mix(in srgb, #c0704a 8%, transparent);
+  border: 1px solid color-mix(in srgb, #c0704a 25%, transparent);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 4px;
+}
+
 /* ─── PAGES MANAGER ──────────────────────────────────────── */
 .pages-manager {
   padding: 0;
