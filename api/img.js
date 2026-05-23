@@ -20,17 +20,20 @@ export default async function handler(req, res) {
   // Sanitize — no path traversal
   const safe = f.replace(/\.\./g, '').replace(/[^a-zA-Z0-9._-]/g, '-');
 
-  const token  = process.env.GITHUB_TOKEN;
-  const owner  = process.env.GITHUB_OWNER;
-  const repo   = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH || 'main';
+  // Env vars are preferred; query params are the fallback so the proxy
+  // works even before Vercel env vars are configured.
+  const token  = process.env.GITHUB_TOKEN  || req.query.t || '';
+  const owner  = process.env.GITHUB_OWNER  || req.query.o || '';
+  const repo   = process.env.GITHUB_REPO   || req.query.r || '';
+  const branch = process.env.GITHUB_BRANCH || req.query.b || 'main';
+
+  if (!owner || !repo) return res.status(500).end('GitHub repo not configured');
 
   const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/images/${safe}`;
 
   try {
-    const imgRes = await fetch(rawUrl, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const fetchHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const imgRes = await fetch(rawUrl, { headers: fetchHeaders });
 
     if (!imgRes.ok) return res.status(404).end('Not found');
 
@@ -39,7 +42,6 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    // Prevent the browser from offering a Save dialog via right-click
     res.setHeader('Content-Disposition', 'inline');
     res.status(200).end(Buffer.from(buffer));
 
