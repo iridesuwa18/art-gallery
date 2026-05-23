@@ -25,7 +25,12 @@ export default function handler(req, res) {
   const match = timingSafeEqual(password, adminPassword);
 
   if (match) {
-    return res.status(200).json({ ok: true });
+    // Return the GitHub token so the browser can upload directly to GitHub,
+    // bypassing Vercel's request body size limit entirely.
+    return res.status(200).json({
+      ok: true,
+      githubToken: process.env.GITHUB_TOKEN || ''
+    });
   } else {
     // Short delay to slow brute force
     setTimeout(() => {
