@@ -38,22 +38,15 @@ async function init() {
 // ─── LOAD ARTBOOK.JSON ────────────────────────────────────────
 async function loadArtbook() {
   try {
-    // Try local artbook.json first (works in dev / Vercel static serve)
-    let res = await fetch('./artbook.json?t=' + Date.now());
-    if (!res.ok) throw new Error('not found');
-    ARTBOOK = await res.json();
+    // Load from the API which reads artbook.json from GitHub.
+    // This ensures the viewer always sees the latest saved config
+    // regardless of Vercel's static file cache.
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config fetch failed');
+    const data = await res.json();
+    ARTBOOK = data.ok ? data.config : { pages: [] };
   } catch(e) {
-    // Fallback: try GitHub raw URL if configured
-    if (window.GITHUB_RAW_URL) {
-      try {
-        const res = await fetch(window.GITHUB_RAW_URL + '/artbook.json?t=' + Date.now());
-        ARTBOOK = await res.json();
-      } catch(e2) {
-        ARTBOOK = { pages: [] };
-      }
-    } else {
-      ARTBOOK = { pages: [] };
-    }
+    ARTBOOK = { pages: [] };
   }
 
   pages = (ARTBOOK.pages || []);
