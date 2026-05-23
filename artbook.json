@@ -7,7 +7,7 @@
   "pages": [
     {
       "id": "page_1779539759975",
-      "layout": "flood",
+      "layout": "large",
       "artworks": [
         {
           "id": "art_1779541593949",
@@ -18,6 +18,11 @@
           "textPosition": "right"
         }
       ]
+    },
+    {
+      "id": "page_1779574961754",
+      "layout": "large",
+      "artworks": []
     }
   ]
 }
