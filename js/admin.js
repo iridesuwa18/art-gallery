@@ -15,7 +15,7 @@ let localConfig    = null; // working copy of artbook.json
 let uploadFile     = null; // file staged for upload
 
 // GitHub credentials captured at login
-let ghCredentials = { owner: '', repo: '', branch: 'main' };
+let ghCredentials = { owner: '', repo: '', branch: 'main', token: '' };
 
 // ─── DOM ─────────────────────────────────────────────────────
 const logo         = document.getElementById('siteLogo');
@@ -122,7 +122,8 @@ async function attemptAuth() {
       ghCredentials = {
         owner,
         repo,
-        branch: authGhBranch.value.trim() || 'main'
+        branch: authGhBranch.value.trim() || 'main',
+        token:  data.githubToken || ''
       };
       adminUnlocked = true;
       showEditor();
@@ -377,42 +378,71 @@ async function doUpload() {
   setProgress(10, 'Reading file…');
 
   try {
-    const base64 = await fileToBase64(uploadFile);
+    // Compress client-side: longest edge ≤ 2400px, JPEG 0.88
+    // This keeps the payload reasonable but the real fix is going
+    // directly to GitHub's API — no Vercel body size limit.
+    const base64DataUrl = await compressImage(uploadFile, 2400, 0.88);
+    const base64Content = base64DataUrl.split(',')[1];
+
     setProgress(30, 'Uploading to GitHub…');
 
+    const { owner, repo, branch, token } = ghCredentials;
+
     const extMatch = uploadFile.name.match(/\.[^.]+$/);
-    const ext = extMatch ? extMatch[0].toLowerCase() : '';
+    const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
     const baseName = artFilename.value.trim()
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') || 'artwork';
-    const filename = baseName + ext;
+    const filename  = baseName + '.jpg'; // compressImage always outputs JPEG
+    const apiPath   = `images/${filename}`;
+    const apiUrl    = `https://api.github.com/repos/${owner}/${repo}/contents/${apiPath}`;
 
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename,
-        base64Content: base64.split(',')[1],
-        mimeType: uploadFile.type
-      })
+    const ghHeaders = {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    // Check if file already exists (need SHA to update)
+    let sha = null;
+    try {
+      const checkRes = await fetch(`${apiUrl}?ref=${branch}`, { headers: ghHeaders });
+      if (checkRes.ok) {
+        const existing = await checkRes.json();
+        sha = existing.sha;
+      }
+    } catch { /* new file, no SHA needed */ }
+
+    setProgress(50, 'Writing to repo…');
+
+    const putBody = { message: `[artbook] Upload ${filename}`, content: base64Content, branch };
+    if (sha) putBody.sha = sha;
+
+    const uploadRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(putBody)
     });
 
-    setProgress(70, 'Processing…');
-    const data = await res.json();
+    if (!uploadRes.ok) {
+      const err = await uploadRes.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub upload failed (${uploadRes.status})`);
+    }
 
-    if (!data.ok) throw new Error(data.error || 'Upload failed');
+    setProgress(75, 'Adding to artbook…');
 
-    setProgress(85, 'Adding to artbook…');
+    // The image URL goes through our /api/img proxy to hide the raw GitHub URL
+    const proxyUrl = `/api/img?f=${encodeURIComponent(filename)}`;
 
-    // Add artwork to the target page in localConfig
     const targetPage = localConfig.pages.find(p => p.id === pendingPageId);
     if (targetPage) {
       if (!targetPage.artworks) targetPage.artworks = [];
       targetPage.artworks.push({
         id:           'art_' + Date.now(),
-        url:          data.url,
+        url:          proxyUrl,
         title,
         date,
         description:  desc,
@@ -420,9 +450,8 @@ async function doUpload() {
       });
     }
 
-    setProgress(92, 'Saving…');
+    setProgress(90, 'Saving config…');
 
-    // Auto-save so the page shows immediately
     const saved = await saveConfig(true);
     if (!saved) throw new Error('Config save failed after upload');
 
@@ -452,6 +481,46 @@ function fileToBase64(file) {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Compress + resize an image file to a data URL (always JPEG output).
+// maxEdge: longest side in pixels. quality: 0–1 JPEG quality.
+function compressImage(file, maxEdge = 2400, quality = 0.88) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = evt => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+
+        // Scale down if needed
+        if (width > maxEdge || height > maxEdge) {
+          if (width >= height) {
+            height = Math.round((height / width) * maxEdge);
+            width  = maxEdge;
+          } else {
+            width  = Math.round((width / height) * maxEdge);
+            height = maxEdge;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // White background so transparent PNGs don't go black
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = evt.target.result;
+    };
     reader.readAsDataURL(file);
   });
 }
