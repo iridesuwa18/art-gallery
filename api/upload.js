@@ -4,27 +4,40 @@
 //   → { ok: boolean, url: string }
 
 // Required Vercel env vars:
-//   ADMIN_PASSWORD  — for implicit check (caller already authed)
 //   GITHUB_TOKEN    — Personal Access Token with repo write scope
 //   GITHUB_OWNER    — your GitHub username
 //   GITHUB_REPO     — repository name
 //   GITHUB_BRANCH   — branch (default: main)
 
-// Tell Vercel to allow up to 6MB request bodies
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '6mb',
+      sizeLimit: '8mb',
     },
   },
 };
 
 export default async function handler(req, res) {
+  // Allow large bodies — Vercel default is 1mb, images can be bigger
+  res.setHeader('Content-Type', 'application/json');
+
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const { filename, base64Content, mimeType } = req.body || {};
+  // Body may arrive as a stream if bodyParser didn't fire (edge case).
+  // Safely read it regardless.
+  let body = req.body;
+  if (!body || typeof body === 'string') {
+    try {
+      const raw = typeof body === 'string' ? body : await readBody(req);
+      body = JSON.parse(raw);
+    } catch (e) {
+      return res.status(400).json({ ok: false, error: 'Invalid JSON body: ' + e.message });
+    }
+  }
+
+  const { filename, base64Content, mimeType } = body || {};
 
   if (!filename || !base64Content) {
     return res.status(400).json({ ok: false, error: 'Missing filename or content' });
@@ -68,12 +81,12 @@ export default async function handler(req, res) {
     }
 
     // Create or update file
-    const body = {
+    const putBody = {
       message: `[artbook] Upload ${safeName}`,
       content: base64Content,
       branch
     };
-    if (sha) body.sha = sha;
+    if (sha) putBody.sha = sha;
 
     const uploadRes = await fetch(apiUrl, {
       method: 'PUT',
@@ -83,7 +96,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'X-GitHub-Api-Version': '2022-11-28'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(putBody)
     });
 
     if (!uploadRes.ok) {
@@ -99,4 +112,14 @@ export default async function handler(req, res) {
   } catch(e) {
     return res.status(500).json({ ok: false, error: e.message });
   }
+}
+
+// Read raw body from stream (fallback when bodyParser hasn't parsed it)
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk.toString(); });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
 }
