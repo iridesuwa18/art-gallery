@@ -10,6 +10,15 @@
 //   GITHUB_REPO     — repository name
 //   GITHUB_BRANCH   — branch (default: main)
 
+// Tell Vercel to allow up to 6MB request bodies
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '6mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
