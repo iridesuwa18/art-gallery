@@ -126,7 +126,56 @@ async function attemptAuth() {
   authSubmit.disabled = false;
 }
 
-// ─── EDITOR ──────────────────────────────────────────────────
+// ─── GITHUB SETTINGS VALIDATION ──────────────────────────────
+function githubSettingsValid() {
+  return ghOwner.value.trim() !== '' && ghRepo.value.trim() !== '';
+}
+
+function assertGithubSettings() {
+  if (!githubSettingsValid()) {
+    // Open the details block and show the hint
+    document.getElementById('githubSettings').open = true;
+    const hint = document.getElementById('ghSettingsHint');
+    hint.style.display = 'block';
+    ghOwner.focus();
+    return false;
+  }
+  document.getElementById('ghSettingsHint').style.display = 'none';
+  return true;
+}
+
+// Hide hint once user fills in the fields
+[ghOwner, ghRepo].forEach(el => {
+  el.addEventListener('input', () => {
+    if (githubSettingsValid()) {
+      document.getElementById('ghSettingsHint').style.display = 'none';
+    }
+  });
+});
+
+// ─── EYE TOGGLE ───────────────────────────────────────────────
+function initEyeToggles() {
+  document.querySelectorAll('.eye-btn').forEach(btn => {
+    const targetId = btn.dataset.target;
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    // Start as masked (type=password)
+    input.type = 'password';
+    let visible = false;
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      visible = !visible;
+      input.type = visible ? 'text' : 'password';
+      // Toggle slash through eye
+      const slash = btn.querySelector('.eye-slash');
+      if (slash) slash.style.display = visible ? 'none' : '';
+    });
+  });
+}
+
+
 function showEditor() {
   adminAuth.style.display = 'none';
   adminEditor.style.display = 'block';
@@ -141,6 +190,7 @@ function showEditor() {
   ghRepo.value   = localConfig.githubRepo  || '';
   ghBranch.value = localConfig.githubBranch || 'main';
 
+  initEyeToggles();
   renderPagesList();
 }
 
@@ -239,6 +289,8 @@ addPageBtn.addEventListener('click', () => {
 saveConfigBtn.addEventListener('click', saveConfig);
 
 async function saveConfig() {
+  if (!assertGithubSettings()) return;
+
   // Update github settings from fields
   localConfig.githubOwner  = ghOwner.value.trim();
   localConfig.githubRepo   = ghRepo.value.trim();
@@ -276,6 +328,8 @@ async function saveConfig() {
 
 // ─── UPLOAD MODAL ─────────────────────────────────────────────
 function openUploadModal(pageId) {
+  if (!assertGithubSettings()) return;
+
   pendingPageId = pageId;
   uploadFile    = null;
 
