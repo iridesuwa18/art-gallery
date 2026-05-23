@@ -8,7 +8,16 @@
     {
       "id": "page_1779574967754",
       "layout": "large",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1779575017323",
+          "url": "/api/img?f=20260212-kanafrierenfanart.jpg",
+          "title": "20260212 Kana Frieren Fanart",
+          "date": "2026-05-23",
+          "description": "Fan Art",
+          "textPosition": "right"
+        }
+      ]
     }
   ]
 }
