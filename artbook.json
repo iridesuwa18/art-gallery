@@ -6,21 +6,7 @@
   "githubBranch": "main",
   "pages": [
     {
-      "id": "page_1779539759975",
-      "layout": "large",
-      "artworks": [
-        {
-          "id": "art_1779541593949",
-          "url": "/api/img?f=20260522-olruggio-fan-art.jpg",
-          "title": "20260522 Olruggio Fan Art",
-          "date": "2026-05-23",
-          "description": "",
-          "textPosition": "right"
-        }
-      ]
-    },
-    {
-      "id": "page_1779574961754",
+      "id": "page_1779574967754",
       "layout": "large",
       "artworks": []
     }
