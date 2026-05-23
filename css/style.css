@@ -582,11 +582,22 @@ input, textarea, select { font-family: var(--font-body); }
 
 /* ─── AUTH FORM ──────────────────────────────────────────── */
 .auth-form {
-  padding: 40px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   align-items: stretch;
+}
+
+.auth-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 .auth-error {
