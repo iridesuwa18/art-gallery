@@ -2,22 +2,13 @@
   "title": "iridesuwa",
   "artist": "iridesuwa",
   "githubOwner": "iridesuwa18",
-  "githubRepo": "A!zakku9814",
+  "githubRepo": "art-gallery",
   "githubBranch": "main",
   "pages": [
     {
       "id": "page_1779539759975",
       "layout": "large",
-      "artworks": [
-        {
-          "id": "art_1779539773639",
-          "url": "/api/img?f=20260522-olruggio-fan-art.jpg",
-          "title": "20260522 Olruggio Fan Art",
-          "date": "2026-05-23",
-          "description": "test",
-          "textPosition": "right"
-        }
-      ]
+      "artworks": []
     }
   ]
 }
