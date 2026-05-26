@@ -23,7 +23,16 @@
     {
       "id": "page_1779764679082",
       "layout": "large",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1779766110258",
+          "url": "/api/img?f=screenshot20260524-072041chrome.jpg",
+          "title": "Screenshot 20260524 072041 Chrome",
+          "date": "2026-05-26",
+          "description": "",
+          "textPosition": "right"
+        }
+      ]
     }
   ]
 }
