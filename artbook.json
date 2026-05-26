@@ -8,7 +8,16 @@
     {
       "id": "page_1779766397689",
       "layout": "medium",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1779766476113",
+          "url": "/api/img?f=screenshot20260525-190127epic-seven.jpg",
+          "title": "Screenshot 20260525 190127 Epic Seven",
+          "date": "2026-05-26",
+          "description": "",
+          "textPosition": "left"
+        }
+      ]
     }
   ]
 }
