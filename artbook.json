@@ -4,5 +4,11 @@
   "githubOwner": "iridesuwa18",
   "githubRepo": "art-gallery",
   "githubBranch": "main",
-  "pages": []
+  "pages": [
+    {
+      "id": "page_1779773391306",
+      "layout": "large",
+      "artworks": []
+    }
+  ]
 }
