@@ -4,35 +4,5 @@
   "githubOwner": "iridesuwa18",
   "githubRepo": "art-gallery",
   "githubBranch": "main",
-  "pages": [
-    {
-      "id": "page_1779574967754",
-      "layout": "flood",
-      "artworks": [
-        {
-          "id": "art_1779575017323",
-          "url": "/api/img?f=20260212-kanafrierenfanart.jpg",
-          "title": "Kana Frieren Fanart",
-          "date": "2026-05-23",
-          "description": "Frieren and Kana means a lot to me bla bla bla bla",
-          "textPosition": "left",
-          "focalX": 28
-        }
-      ]
-    },
-    {
-      "id": "page_1779764679082",
-      "layout": "large",
-      "artworks": [
-        {
-          "id": "art_1779766110258",
-          "url": "/api/img?f=screenshot20260524-072041chrome.jpg",
-          "title": "Screenshot 20260524 072041 Chrome",
-          "date": "2026-05-26",
-          "description": "",
-          "textPosition": "right"
-        }
-      ]
-    }
-  ]
+  "pages": []
 }
