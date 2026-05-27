@@ -730,11 +730,19 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      // Tall thin teardrop — narrow but centred in the square
-      const rx = S * 0.07, ry = S * 0.38;
+      // Small dot — same shape as Round but noticeably smaller
+      const r = S * 0.18;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
       ctx.fill();
+      // Soft highlight
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(cx - r*0.28, cy - r*0.22, r*0.32, r*0.22, -0.4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
     }
   },
   {
@@ -745,8 +753,8 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      const bw = S * 0.72, bh = S * 0.28;
-      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.025);
+      const bw = S * 0.62, bh = S * 0.42;
+      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.04);
       ctx.fill();
       // Bristle texture lines
       ctx.save();
@@ -768,11 +776,11 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      const bw = S * 0.68, bh = S * 0.28;
+      const bw = S * 0.58, bh = S * 0.42;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(0.22);
-      roundRect(ctx, -bw/2, -bh/2, bw, bh, S*0.02);
+      roundRect(ctx, -bw/2, -bh/2, bw, bh, S*0.04);
       ctx.fill();
       ctx.restore();
     }
@@ -848,7 +856,7 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      const rx = S * 0.22, ry = S * 0.40;
+      const rx = S * 0.30, ry = S * 0.38;
       // Pointed at bottom, rounded at top
       ctx.beginPath();
       ctx.moveTo(cx, cy + ry);
@@ -866,7 +874,7 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      const bw = S * 0.36, tipY = cy + S*0.40, baseY = cy - S*0.18;
+      const bw = S * 0.50, tipY = cy + S*0.32, baseY = cy - S*0.20;
       ctx.beginPath();
       ctx.moveTo(cx, tipY);
       ctx.bezierCurveTo(cx + bw*0.3, cy + S*0.15, cx + bw/2, baseY + S*0.08, cx + bw/2, baseY);
@@ -883,12 +891,14 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      const rx = S * 0.34, ry = S * 0.38;
-      // Dome top, flat bottom
+      const rx = S * 0.36, ry = S * 0.36;
+      const topY  = cy - ry * 0.55;  // centre of the dome arc
+      const flatY = cy + ry * 0.55;  // y of the flat bottom edge
+      // Dome top (semicircle), straight sides, flat bottom
       ctx.beginPath();
-      ctx.arc(cx, cy - ry*0.08, rx, Math.PI, 0);
-      ctx.lineTo(cx + rx, cy + ry*0.92);
-      ctx.arc(cx, cy + ry*0.92, rx, 0, Math.PI);
+      ctx.arc(cx, topY, rx, Math.PI, 0);   // dome left → right
+      ctx.lineTo(cx + rx, flatY);            // right side down
+      ctx.lineTo(cx - rx, flatY);            // flat bottom
       ctx.closePath();
       ctx.fill();
     }
@@ -920,14 +930,14 @@ const BRUSH_SHAPES = [
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
       const S = Math.min(W, H);
-      // Wide flat rectangle — chisel head viewed face-on
-      const bw = S * 0.72, bh = S * 0.20;
-      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.012);
+      // Landscape rectangle — clearly wider than tall but not paper-thin
+      const bw = S * 0.62, bh = S * 0.36;
+      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.025);
       ctx.fill();
       ctx.save();
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = '#fff';
-      roundRect(ctx, cx - bw/2 + S*0.03, cy - bh/2 + S*0.02, bw*0.32, bh - S*0.04, S*0.008);
+      roundRect(ctx, cx - bw/2 + S*0.03, cy - bh/2 + S*0.03, bw*0.28, bh - S*0.06, S*0.012);
       ctx.fill();
       ctx.restore();
     }
