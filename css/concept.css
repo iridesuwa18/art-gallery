@@ -977,3 +977,97 @@
 body:has(.brush-shape-section) {
   overflow-y: auto;
 }
+
+/* ─── SETTINGS GEAR BUTTON (icon-only panel-btn variant) ─── */
+.panel-btn.icon-only {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── GENERATOR SETTINGS DROPDOWN MENU ─── */
+.gen-settings-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.gen-settings-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  min-width: 148px;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  padding: 4px;
+  animation: menuIn 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top right;
+}
+.gen-settings-menu.open {
+  display: flex;
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.gen-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-mid);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.gen-settings-item:hover {
+  background: var(--bg-2);
+  color: var(--text);
+}
+.gen-settings-item svg {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+/* ─── PREVIEW AREA INNER WRAPPER ─── */
+.preview-area-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ─── PREVIEW TOP BAR (Export PNG row above card) ─── */
+.preview-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Override: concept-preview-area now centers its inner wrapper */
+.concept-preview-area {
+  align-items: flex-start;
+  padding-top: 40px;
+}
+.preview-area-inner .concept-preview-card {
+  width: 100%;
+  max-width: 100%;
+}
