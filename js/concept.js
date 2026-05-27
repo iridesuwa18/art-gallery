@@ -169,6 +169,7 @@ let state = CATEGORY_DEFS.map(def => ({ defId: def.id, selections: [null] }));
 const genBody              = document.getElementById('genBody');
 const randomiseAllBtn      = document.getElementById('randomiseAllBtn');
 const downloadJsonBtn      = document.getElementById('downloadJsonBtn');
+const downloadPngBtn       = document.getElementById('downloadPngBtn');
 const previewContent       = document.getElementById('previewContent');
 const previewCard          = document.getElementById('previewCard');
 const previewTimerRing     = document.getElementById('previewTimerRing');
@@ -671,6 +672,52 @@ downloadJsonBtn.addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+if (downloadPngBtn) {
+  downloadPngBtn.addEventListener('click', async () => {
+    const target = previewCard;
+    if (!target) return;
+
+    const origLabel = downloadPngBtn.innerHTML;
+    downloadPngBtn.disabled = true;
+    downloadPngBtn.innerHTML = '…';
+
+    try {
+      // Dynamically load html2canvas if not already present
+      if (!window.html2canvas) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      const canvas = await window.html2canvas(target, {
+        backgroundColor: null,
+        scale: 2,          // 2× for sharper output
+        useCORS: true,
+        logging: false,
+      });
+
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'art-concept.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    } catch (err) {
+      console.error('PNG export failed:', err);
+      alert('Could not export PNG. Check console for details.');
+    } finally {
+      downloadPngBtn.disabled = false;
+      downloadPngBtn.innerHTML = origLabel;
+    }
+  });
+}
 
 randomiseAllBtn.addEventListener('click', randomiseAll);
 
