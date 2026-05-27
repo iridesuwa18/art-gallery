@@ -8,7 +8,30 @@
     {
       "id": "page_1779773391306",
       "layout": "large",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1779890711258",
+          "url": "/api/img?f=20260527thebluerooftops.jpg",
+          "title": "The Blue Rooftops",
+          "date": "2026-05-27",
+          "description": "Those blue rooftops harmonizes like a sea rich and deep into the greens of the grass. An abstract world you probably don't understand, and neither I, as the painter.",
+          "textPosition": "right",
+          "concept": {
+            "medium": [
+              "Coloured Pencil (oil-based)",
+              "Water-soluble Coloured Pencil"
+            ],
+            "colour": [
+              "Blue",
+              "Green"
+            ],
+            "theme": "Abstract Environment",
+            "genre": "Renaissance",
+            "timer": "30 min",
+            "style": "Abstract Art"
+          }
+        }
+      ]
     }
   ]
 }
