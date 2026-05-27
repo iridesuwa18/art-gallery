@@ -49,9 +49,9 @@
 
 .gen-panel-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 12px 18px 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 8px;
@@ -69,7 +69,6 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  width: 100%;
 }
 
 .gen-body {
@@ -82,10 +81,7 @@
 .gen-body::-webkit-scrollbar-track { background: transparent; }
 .gen-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-.gen-header-actions .panel-btn.sm {
-  flex: 1;
-  justify-content: center;
-}
+/* ─── CATEGORY BLOCK ─── */
 .cat-block {
   border-bottom: 1px solid var(--border-light);
   padding: 0;
@@ -424,18 +420,190 @@
   line-height: 1.2;
 }
 
-/* ─── MEDIUM DETAIL MODAL ─── */
-.medium-detail-modal {
-  width: min(560px, 96vw);
-  max-height: 80dvh;
-}
-
-.medium-detail-body {
+/* ─── COMPARE DRAWER ─── */
+.compare-drawer {
+  width: min(900px, 96vw);
+  max-height: 88dvh;
   display: flex;
   flex-direction: column;
-  gap: 0;
   padding: 0;
+  overflow: hidden;
+}
+
+.compare-drawer-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.compare-drawer-title {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.medium-detail-inner {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Individual pane ── */
+.compare-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.compare-pane--full  { flex: 1; }
+.compare-pane--half  { flex: 1; min-width: 0; }
+
+.compare-pane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.compare-medium-select {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  min-width: 0;
+}
+.compare-medium-select:focus { border-color: var(--text-mid); }
+
+.compare-pane-body {
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+.compare-pane-body::-webkit-scrollbar { width: 4px; }
+.compare-pane-body::-webkit-scrollbar-track { background: transparent; }
+.compare-pane-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.compare-pane-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-pane-empty {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+
+/* ── Plus button (add compare pane) ── */
+.compare-add-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.compare-add-btn:hover {
+  border-color: var(--text-mid);
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+/* ── Close right pane button ── */
+.compare-close-right-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.compare-close-right-btn:hover {
+  border-color: var(--text-mid);
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+/* ── Vertical divider between panes ── */
+.compare-divider {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* ── Responsive: two panes too tight — stack vertically or scroll ── */
+@media (max-width: 640px) {
+  .compare-drawer {
+    width: 100vw;
+    max-height: 90dvh;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+  }
+
+  .medium-detail-inner {
+    flex-direction: row;    /* side by side */
+    overflow-x: auto;       /* horizontal scroll if needed */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .compare-pane {
+    scroll-snap-align: start;
+    min-width: min(320px, 85vw);
+    max-width: min(320px, 85vw);
+    border-right: 1px solid var(--border-light);
+  }
+
+  .compare-pane:last-child { border-right: none; }
+
+  .compare-pane-body {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .modal-overlay:has(.compare-drawer) {
+    align-items: flex-end;
+    padding: 0;
+  }
 }
 
 .medium-detail-row {
