@@ -177,8 +177,9 @@ const timerFill            = document.getElementById('timerFill');
 const timerText            = document.getElementById('timerText');
 const mediumDetailOverlay  = document.getElementById('mediumDetailOverlay');
 const mediumDetailClose    = document.getElementById('mediumDetailClose');
-const mediumDetailTitle    = document.getElementById('mediumDetailTitle');
-const mediumDetailBody     = document.getElementById('mediumDetailBody');
+// Legacy refs (kept so old shim doesn't throw)
+const mediumDetailTitle    = { textContent: '' };
+const mediumDetailBody     = { innerHTML: '', prepend: () => {} };
 
 // ─── HELPERS ──────────────────────────────────────────────────
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -521,47 +522,165 @@ function updatePreview() {
   }
 }
 
-// ─── MEDIUM DETAIL MODAL ──────────────────────────────────────
+// ─── MEDIUM DETAIL COMPARE DRAWER ────────────────────────────
+// State: which medium is shown in each pane
+let compareState = { left: null, right: null, twoPane: false };
+
+function buildMediumSelect(currentName, onChangeFn) {
+  const sel = document.createElement('select');
+  sel.className = 'compare-medium-select';
+  const blank = document.createElement('option');
+  blank.value = ''; blank.textContent = '— choose a medium —';
+  if (!currentName) blank.selected = true;
+  sel.appendChild(blank);
+  const cats = [...new Set(ART_MEDIUMS.map(m => m.category))];
+  cats.forEach(cat => {
+    const grp = document.createElement('optgroup');
+    grp.label = cat;
+    ART_MEDIUMS.filter(m => m.category === cat).forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.name; o.textContent = m.name;
+      if (m.name === currentName) o.selected = true;
+      grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  });
+  sel.addEventListener('change', () => onChangeFn(sel.value || null));
+  return sel;
+}
+
+function buildPaneContent(mediumName) {
+  const wrap = document.createElement('div');
+  wrap.className = 'compare-pane-content';
+  if (!mediumName) {
+    const empty = document.createElement('p');
+    empty.className = 'compare-pane-empty';
+    empty.textContent = 'Select a medium above to view its details.';
+    wrap.appendChild(empty);
+    return wrap;
+  }
+  const m = getMedium(mediumName);
+  if (!m) return wrap;
+
+  // Category badge at top
+  const allProps = [['Category', m.category], ...Object.entries(MEDIUM_COL_LABELS).map(([k, lbl]) => [lbl, m[k]]).filter(([, v]) => v)];
+  allProps.forEach(([label, val]) => {
+    const row = document.createElement('div');
+    row.className = 'medium-detail-row';
+    const lbl = document.createElement('div');
+    lbl.className = 'medium-detail-col-label';
+    lbl.textContent = label;
+    const v = document.createElement('div');
+    v.className = 'medium-detail-col-value';
+    v.textContent = val;
+    row.appendChild(lbl);
+    row.appendChild(v);
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
+function renderCompareDrawer() {
+  const overlay = document.getElementById('mediumDetailOverlay');
+  const inner   = overlay.querySelector('.medium-detail-inner');
+  inner.innerHTML = '';
+
+  const { left, right, twoPane } = compareState;
+
+  // ── Left pane ──
+  const leftPane = document.createElement('div');
+  leftPane.className = 'compare-pane' + (twoPane ? ' compare-pane--half' : ' compare-pane--full');
+
+  const leftHeader = document.createElement('div');
+  leftHeader.className = 'compare-pane-header';
+
+  // Plus button (only on left pane, only when single pane)
+  if (!twoPane) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'compare-add-btn';
+    addBtn.title = 'Compare with another medium';
+    addBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>`;
+    addBtn.addEventListener('click', () => {
+      compareState.twoPane = true;
+      renderCompareDrawer();
+    });
+    leftHeader.appendChild(addBtn);
+  }
+
+  const leftSel = buildMediumSelect(left, val => {
+    compareState.left = val;
+    renderCompareDrawer();
+  });
+  leftHeader.appendChild(leftSel);
+  leftPane.appendChild(leftHeader);
+
+  const leftBody = document.createElement('div');
+  leftBody.className = 'compare-pane-body';
+  leftBody.appendChild(buildPaneContent(left));
+  leftPane.appendChild(leftBody);
+  inner.appendChild(leftPane);
+
+  // ── Divider + Right pane ──
+  if (twoPane) {
+    const divider = document.createElement('div');
+    divider.className = 'compare-divider';
+    inner.appendChild(divider);
+
+    const rightPane = document.createElement('div');
+    rightPane.className = 'compare-pane compare-pane--half';
+
+    const rightHeader = document.createElement('div');
+    rightHeader.className = 'compare-pane-header';
+
+    // Close right pane button
+    const closeRightBtn = document.createElement('button');
+    closeRightBtn.className = 'compare-close-right-btn';
+    closeRightBtn.title = 'Close compare pane';
+    closeRightBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+      <path d="M1 1l9 9M10 1L1 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>`;
+    closeRightBtn.addEventListener('click', () => {
+      compareState.twoPane = false;
+      compareState.right = null;
+      renderCompareDrawer();
+    });
+
+    const rightSel = buildMediumSelect(right, val => {
+      compareState.right = val;
+      renderCompareDrawer();
+    });
+
+    rightHeader.appendChild(closeRightBtn);
+    rightHeader.appendChild(rightSel);
+    rightPane.appendChild(rightHeader);
+
+    const rightBody = document.createElement('div');
+    rightBody.className = 'compare-pane-body';
+    rightBody.appendChild(buildPaneContent(right));
+    rightPane.appendChild(rightBody);
+    inner.appendChild(rightPane);
+  }
+}
+
 function openMediumDetail(mediumName) {
+  compareState.left = mediumName;
+  compareState.twoPane = false;
+  compareState.right = null;
+
+  const overlay = document.getElementById('mediumDetailOverlay');
+  overlay.style.display = 'flex';
+  renderCompareDrawer();
+}
+
+// Legacy shim — old modal refs no longer used directly
+function _legacyOpenMediumDetail(mediumName) {
   const m = getMedium(mediumName);
   if (!m) return;
 
   mediumDetailTitle.textContent = m.name;
   mediumDetailBody.innerHTML = '';
-
-  Object.entries(MEDIUM_COL_LABELS).forEach(([key, label]) => {
-    if (!m[key]) return;
-    const row = document.createElement('div');
-    row.className = 'medium-detail-row';
-
-    const lbl = document.createElement('div');
-    lbl.className = 'medium-detail-col-label';
-    lbl.textContent = label;
-
-    const val = document.createElement('div');
-    val.className = 'medium-detail-col-value';
-    val.textContent = m[key];
-
-    row.appendChild(lbl);
-    row.appendChild(val);
-    mediumDetailBody.appendChild(row);
-  });
-
-  // Category badge
-  const catRow = document.createElement('div');
-  catRow.className = 'medium-detail-row';
-  const catLbl = document.createElement('div');
-  catLbl.className = 'medium-detail-col-label';
-  catLbl.textContent = 'Category';
-  const catVal = document.createElement('div');
-  catVal.className = 'medium-detail-col-value';
-  catVal.textContent = m.category;
-  catRow.appendChild(catLbl);
-  catRow.appendChild(catVal);
-  mediumDetailBody.prepend(catRow);
-
-  mediumDetailOverlay.style.display = 'flex';
-}
 
 mediumDetailClose.addEventListener('click', () => { mediumDetailOverlay.style.display = 'none'; });
 mediumDetailOverlay.addEventListener('click', e => { if (e.target === mediumDetailOverlay) mediumDetailOverlay.style.display = 'none'; });
@@ -1442,4 +1561,3 @@ document.addEventListener('DOMContentLoaded', () => {
   const section = buildBrushShapeSection();
   document.querySelector('main.concept-main')?.after(section);
 });
-
