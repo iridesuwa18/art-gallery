@@ -49,9 +49,9 @@
 
 .gen-panel-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 18px 10px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 8px;
@@ -69,6 +69,7 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .gen-body {
@@ -81,7 +82,10 @@
 .gen-body::-webkit-scrollbar-track { background: transparent; }
 .gen-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-/* ─── CATEGORY BLOCK ─── */
+.gen-header-actions .panel-btn.sm {
+  flex: 1;
+  justify-content: center;
+}
 .cat-block {
   border-bottom: 1px solid var(--border-light);
   padding: 0;
