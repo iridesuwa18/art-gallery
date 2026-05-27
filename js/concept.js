@@ -708,21 +708,16 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const rx = W * 0.18, ry = H * 0.28;
-      // Body
+      const r = Math.min(W, H) * 0.38;
       ctx.beginPath();
-      ctx.ellipse(cx, cy + H*0.04, rx, ry, 0, 0, Math.PI*2);
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
       ctx.fill();
-      // Ferrule
-      drawFerrule(ctx, cx, cy + H*0.04 - ry + H*0.06, W*0.13, H*0.09);
-      // Handle
-      drawHandle(ctx, cx, cy + H*0.04 - ry + H*0.04 - H*0.09, H*0.32);
-      // Tip highlight
+      // Soft highlight
       ctx.save();
       ctx.globalAlpha = 0.18;
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.ellipse(cx - rx*0.28, cy + H*0.04 + ry - H*0.08, rx*0.32, H*0.06, -0.3, 0, Math.PI*2);
+      ctx.ellipse(cx - r*0.28, cy - r*0.22, r*0.32, r*0.22, -0.4, 0, Math.PI*2);
       ctx.fill();
       ctx.restore();
     }
@@ -734,12 +729,12 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const rx = W * 0.045, ry = H * 0.30;
+      const S = Math.min(W, H);
+      // Tall thin teardrop — narrow but centred in the square
+      const rx = S * 0.07, ry = S * 0.38;
       ctx.beginPath();
-      ctx.ellipse(cx, cy + H*0.05, rx, ry, 0, 0, Math.PI*2);
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
       ctx.fill();
-      drawFerrule(ctx, cx, cy + H*0.05 - ry + H*0.05, W*0.10, H*0.08);
-      drawHandle(ctx, cx, cy + H*0.05 - ry + H*0.03 - H*0.08, H*0.33);
     }
   },
   {
@@ -749,22 +744,20 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const bw = W*0.36, bh = H*0.22, by = cy + H*0.08;
-      // Bristle head
-      roundRect(ctx, cx - bw/2, by - bh/2, bw, bh, W*0.025);
+      const S = Math.min(W, H);
+      const bw = S * 0.72, bh = S * 0.28;
+      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.025);
       ctx.fill();
       // Bristle texture lines
       ctx.save();
       ctx.globalAlpha = 0.13;
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = W*0.006;
-      for (let i = 1; i < 6; i++) {
-        const x = cx - bw/2 + bw*(i/6);
-        ctx.beginPath(); ctx.moveTo(x, by - bh/2 + 4); ctx.lineTo(x, by + bh/2 - 4); ctx.stroke();
+      ctx.lineWidth = S*0.008;
+      for (let i = 1; i < 7; i++) {
+        const x = cx - bw/2 + bw*(i/7);
+        ctx.beginPath(); ctx.moveTo(x, cy - bh/2 + 4); ctx.lineTo(x, cy + bh/2 - 4); ctx.stroke();
       }
       ctx.restore();
-      drawFerrule(ctx, cx, by - bh/2 - H*0.025, W*0.18, H*0.06);
-      drawHandle(ctx, cx, by - bh/2 - H*0.025 - H*0.06, H*0.30);
     }
   },
   {
@@ -774,15 +767,14 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const bw = W*0.34, bh = H*0.20, by = cy + H*0.08;
+      const S = Math.min(W, H);
+      const bw = S * 0.68, bh = S * 0.28;
       ctx.save();
-      ctx.translate(cx, by);
-      ctx.rotate(0.18);
-      roundRect(ctx, -bw/2, -bh/2, bw, bh, W*0.02);
+      ctx.translate(cx, cy);
+      ctx.rotate(0.22);
+      roundRect(ctx, -bw/2, -bh/2, bw, bh, S*0.02);
       ctx.fill();
       ctx.restore();
-      drawFerrule(ctx, cx, by - bh/2 - H*0.02, W*0.17, H*0.06);
-      drawHandle(ctx, cx, by - bh/2 - H*0.02 - H*0.06, H*0.30);
     }
   },
   {
@@ -792,17 +784,16 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const bw = W*0.26, bh = H*0.24, by = cy + H*0.07;
-      // Body with rounded bottom only
+      const S = Math.min(W, H);
+      const bw = S * 0.60, bh = S * 0.38;
+      // Flat top, rounded bottom
       ctx.beginPath();
-      ctx.moveTo(cx - bw/2, by - bh/2);
-      ctx.lineTo(cx + bw/2, by - bh/2);
-      ctx.lineTo(cx + bw/2, by + bh/2 - bw/2);
-      ctx.arc(cx, by + bh/2 - bw/2, bw/2, 0, Math.PI);
+      ctx.moveTo(cx - bw/2, cy - bh/2);
+      ctx.lineTo(cx + bw/2, cy - bh/2);
+      ctx.lineTo(cx + bw/2, cy + bh/2 - bw/2);
+      ctx.arc(cx, cy + bh/2 - bw/2, bw/2, 0, Math.PI);
       ctx.closePath();
       ctx.fill();
-      drawFerrule(ctx, cx, by - bh/2 - H*0.02, W*0.155, H*0.065);
-      drawHandle(ctx, cx, by - bh/2 - H*0.02 - H*0.065, H*0.30);
     }
   },
   {
@@ -811,10 +802,10 @@ const BRUSH_SHAPES = [
     desc: 'Spread fan of bristles for texturing, blending, and foliage.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.05;
-      const r = H * 0.24, spread = Math.PI * 0.72;
+      const cx = W/2, cy = H/2 + H*0.12;
+      const S = Math.min(W, H);
+      const r = S * 0.44, spread = Math.PI * 0.80;
       const start = -Math.PI/2 - spread/2, end = -Math.PI/2 + spread/2;
-      // Fan arc
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, r, start, end);
@@ -824,17 +815,15 @@ const BRUSH_SHAPES = [
       ctx.save();
       ctx.globalAlpha = 0.15;
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = W * 0.008;
-      for (let i = 1; i < 8; i++) {
-        const a = start + (spread * i/8);
+      ctx.lineWidth = S * 0.010;
+      for (let i = 1; i < 9; i++) {
+        const a = start + (spread * i/9);
         ctx.beginPath();
-        ctx.moveTo(cx + 8, cy);
+        ctx.moveTo(cx, cy);
         ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
         ctx.stroke();
       }
       ctx.restore();
-      drawFerrule(ctx, cx, cy - H*0.04, W*0.10, H*0.065);
-      drawHandle(ctx, cx, cy - H*0.04 - H*0.065, H*0.30);
     }
   },
   {
@@ -844,12 +833,11 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const bw = W*0.22, bh = H*0.26, by = cy + H*0.07;
+      const S = Math.min(W, H);
+      const rx = S * 0.28, ry = S * 0.40;
       ctx.beginPath();
-      ctx.ellipse(cx, by, bw/2, bh/2, 0, 0, Math.PI*2);
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
       ctx.fill();
-      drawFerrule(ctx, cx, by - bh/2 - H*0.015, W*0.15, H*0.065);
-      drawHandle(ctx, cx, by - bh/2 - H*0.015 - H*0.065, H*0.30);
     }
   },
   {
@@ -858,17 +846,16 @@ const BRUSH_SHAPES = [
     desc: 'Oval body tapering to a pointed tip — used by quill pens.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.04;
-      const rx = W*0.12, ry = H*0.26;
-      // Pointed tip at bottom
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const rx = S * 0.22, ry = S * 0.40;
+      // Pointed at bottom, rounded at top
       ctx.beginPath();
       ctx.moveTo(cx, cy + ry);
-      ctx.bezierCurveTo(cx + rx*0.6, cy + ry*0.4, cx + rx, cy - ry*0.3, cx + rx*0.2, cy - ry);
-      ctx.bezierCurveTo(cx, cy - ry*1.05, cx, cy - ry*1.05, cx - rx*0.2, cy - ry);
-      ctx.bezierCurveTo(cx - rx, cy - ry*0.3, cx - rx*0.6, cy + ry*0.4, cx, cy + ry);
+      ctx.bezierCurveTo(cx + rx*0.6, cy + ry*0.5, cx + rx, cy - ry*0.2, cx + rx*0.15, cy - ry);
+      ctx.bezierCurveTo(cx, cy - ry*1.04, cx, cy - ry*1.04, cx - rx*0.15, cy - ry);
+      ctx.bezierCurveTo(cx - rx, cy - ry*0.2, cx - rx*0.6, cy + ry*0.5, cx, cy + ry);
       ctx.fill();
-      drawFerrule(ctx, cx, cy - ry - H*0.01, W*0.10, H*0.06);
-      drawHandle(ctx, cx, cy - ry - H*0.01 - H*0.06, H*0.28);
     }
   },
   {
@@ -877,16 +864,15 @@ const BRUSH_SHAPES = [
     desc: 'Round base tapering to a fine point — for calligraphy brush pens.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.05;
-      const bw = W*0.16, tipY = cy + H*0.28, baseY = cy - H*0.10;
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const bw = S * 0.36, tipY = cy + S*0.40, baseY = cy - S*0.18;
       ctx.beginPath();
       ctx.moveTo(cx, tipY);
-      ctx.bezierCurveTo(cx + bw*0.3, cy + H*0.1, cx + bw/2, baseY + H*0.06, cx + bw/2, baseY);
+      ctx.bezierCurveTo(cx + bw*0.3, cy + S*0.15, cx + bw/2, baseY + S*0.08, cx + bw/2, baseY);
       ctx.arc(cx, baseY, bw/2, 0, Math.PI, true);
-      ctx.bezierCurveTo(cx - bw/2, baseY + H*0.06, cx - bw*0.3, cy + H*0.1, cx, tipY);
+      ctx.bezierCurveTo(cx - bw/2, baseY + S*0.08, cx - bw*0.3, cy + S*0.15, cx, tipY);
       ctx.fill();
-      drawFerrule(ctx, cx, baseY - H*0.025, W*0.12, H*0.06);
-      drawHandle(ctx, cx, baseY - H*0.025 - H*0.06, H*0.28);
     }
   },
   {
@@ -895,24 +881,16 @@ const BRUSH_SHAPES = [
     desc: 'Rounded head with a blunt flat bottom — oil pastels and chunky media.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.04;
-      const rx = W*0.17, ry = H*0.21;
-      // Flat bottom, domed top
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const rx = S * 0.34, ry = S * 0.38;
+      // Dome top, flat bottom
       ctx.beginPath();
-      ctx.arc(cx, cy - ry*0.3, rx, Math.PI, 0);
-      ctx.lineTo(cx + rx, cy + ry*0.7);
-      ctx.arc(cx, cy + ry*0.7, rx, 0, Math.PI);
+      ctx.arc(cx, cy - ry*0.08, rx, Math.PI, 0);
+      ctx.lineTo(cx + rx, cy + ry*0.92);
+      ctx.arc(cx, cy + ry*0.92, rx, 0, Math.PI);
       ctx.closePath();
       ctx.fill();
-      // No ferrule/handle — this is a pastel/crayon body shape
-      // Flat bottom edge highlight
-      ctx.save();
-      ctx.globalAlpha = 0.14;
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + ry*0.7, rx*0.8, H*0.018, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
     }
   },
   {
@@ -921,14 +899,15 @@ const BRUSH_SHAPES = [
     desc: 'Square-tipped tool — conté crayons, square brushes.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.04;
-      const s = W * 0.26;
-      roundRect(ctx, cx - s/2, cy - s*0.9, s, s*1.8, W*0.015);
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const s = S * 0.66;
+      roundRect(ctx, cx - s/2, cy - s/2, s, s, S*0.04);
       ctx.fill();
       ctx.save();
       ctx.globalAlpha = 0.13;
       ctx.fillStyle = '#fff';
-      roundRect(ctx, cx - s/2 + s*0.08, cy - s*0.9 + s*0.08, s*0.28, s*1.6, W*0.01);
+      roundRect(ctx, cx - s/2 + s*0.08, cy - s/2 + s*0.08, s*0.22, s*0.78, S*0.02);
       ctx.fill();
       ctx.restore();
     }
@@ -939,21 +918,16 @@ const BRUSH_SHAPES = [
     desc: 'Flat chisel end — reed pens, bamboo pens, broad-edge tools.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.04;
-      const bw = W*0.30, bh = H*0.07;
-      const bodyH = H * 0.32;
-      // Body (shaft)
-      roundRect(ctx, cx - bw*0.18, cy - bodyH/2, bw*0.36, bodyH, W*0.012);
-      ctx.fill();
-      // Chisel tip
-      ctx.beginPath();
-      ctx.rect(cx - bw/2, cy + bodyH/2 - H*0.01, bw, bh);
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      // Wide flat rectangle — chisel head viewed face-on
+      const bw = S * 0.72, bh = S * 0.20;
+      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.012);
       ctx.fill();
       ctx.save();
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.rect(cx - bw*0.5 + 2, cy + bodyH/2, bw*0.35, bh - 2);
+      roundRect(ctx, cx - bw/2 + S*0.03, cy - bh/2 + S*0.02, bw*0.32, bh - S*0.04, S*0.008);
       ctx.fill();
       ctx.restore();
     }
@@ -964,30 +938,29 @@ const BRUSH_SHAPES = [
     desc: 'Triangular body (like a wax crayon) with a rounded tip.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.06;
-      const r = W * 0.20, h = H * 0.52;
-      // Triangular prism — 3 faces visible
-      const top = cy - h/2;
-      const bot = cy + h/2;
-      // Front face
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const r = S * 0.38;
+      // Equilateral triangle with rounded corners
+      const pts = [0, 1, 2].map(i => {
+        const a = (i * 2*Math.PI/3) - Math.PI/2;
+        return [cx + Math.cos(a)*r, cy + Math.sin(a)*r];
+      });
+      const cr = S * 0.06; // corner radius
       ctx.beginPath();
-      ctx.moveTo(cx - r, top + r*0.3);
-      ctx.lineTo(cx + r, top + r*0.3);
-      ctx.lineTo(cx + r*0.6, bot);
-      ctx.arc(cx, bot, r*0.6, 0, Math.PI);
+      pts.forEach(([px, py], i) => {
+        const [ax, ay] = pts[(i + pts.length - 1) % pts.length];
+        const [bx, by] = pts[(i + 1) % pts.length];
+        const d1x = px - ax, d1y = py - ay, l1 = Math.hypot(d1x, d1y);
+        const d2x = bx - px, d2y = by - py, l2 = Math.hypot(d2x, d2y);
+        const t1x = px - cr * d1x/l1, t1y = py - cr * d1y/l1;
+        const t2x = px + cr * d2x/l2, t2y = py + cr * d2y/l2;
+        if (i === 0) ctx.moveTo(t1x, t1y);
+        else ctx.lineTo(t1x, t1y);
+        ctx.quadraticCurveTo(px, py, t2x, t2y);
+      });
       ctx.closePath();
       ctx.fill();
-      // Edge highlight
-      ctx.save();
-      ctx.globalAlpha = 0.17;
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.moveTo(cx - r*0.05, top + r*0.3);
-      ctx.lineTo(cx + r*0.05, top + r*0.3);
-      ctx.lineTo(cx + r*0.05, bot - r*0.3);
-      ctx.lineTo(cx - r*0.05, bot - r*0.3);
-      ctx.fill();
-      ctx.restore();
     }
   },
   {
@@ -996,8 +969,9 @@ const BRUSH_SHAPES = [
     desc: 'Rough, uneven bristle edges — charcoal sticks and expressive media.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.04;
-      const rx = W*0.20, ry = H*0.28;
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const rx = S * 0.38, ry = S * 0.38;
       // Irregular blob
       ctx.beginPath();
       const pts = 18;
@@ -1010,8 +984,6 @@ const BRUSH_SHAPES = [
       }
       ctx.closePath();
       ctx.fill();
-      drawFerrule(ctx, cx, cy - ry - H*0.01, W*0.14, H*0.07);
-      drawHandle(ctx, cx, cy - ry - H*0.01 - H*0.07, H*0.28);
     }
   },
   {
@@ -1020,14 +992,15 @@ const BRUSH_SHAPES = [
     desc: 'Free-form application — graphite powder, sponge, or broad tools.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.05;
-      // Diffuse cloud-like shape
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      // Diffuse cloud-like shape — square-proportioned blobs
       const blobs = [
-        [cx, cy, W*0.22, H*0.20, 1.0],
-        [cx + W*0.12, cy - H*0.06, W*0.16, H*0.15, 0.7],
-        [cx - W*0.13, cy - H*0.04, W*0.15, H*0.14, 0.7],
-        [cx + W*0.08, cy + H*0.10, W*0.17, H*0.13, 0.65],
-        [cx - W*0.10, cy + H*0.09, W*0.14, H*0.12, 0.6],
+        [cx,          cy,          S*0.26, S*0.26, 1.0],
+        [cx + S*0.14, cy - S*0.10, S*0.18, S*0.18, 0.7],
+        [cx - S*0.15, cy - S*0.08, S*0.17, S*0.17, 0.7],
+        [cx + S*0.10, cy + S*0.14, S*0.18, S*0.18, 0.65],
+        [cx - S*0.12, cy + S*0.12, S*0.16, S*0.16, 0.6],
       ];
       blobs.forEach(([bx, by, brx, bry, a]) => {
         ctx.save();
@@ -1045,11 +1018,11 @@ const BRUSH_SHAPES = [
     desc: 'Airbrushed soft-edged spray — feathered circular falloff.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.03;
-      const r = W * 0.28;
+      const cx = W/2, cy = H/2;
+      const S = Math.min(W, H);
+      const r = S * 0.42;
       // Radial gradient falloff
       const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      // Use the current fill colour from ctx
       const col = ctx.fillStyle;
       grd.addColorStop(0,   col);
       grd.addColorStop(0.4, col);
@@ -1192,6 +1165,49 @@ function buildShapeThumbnail(shape) {
 }
 
 // ── Download 1080×1080 PNG (white silhouette on transparent background) ──
+// ── Download all shapes as a single ZIP ──────────────────────
+async function downloadAllShapesZip(btn) {
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '… building zip';
+
+  // Load JSZip from CDN if not already present
+  if (!window.JSZip) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const zip = new window.JSZip();
+  const folder = zip.folder('brush-shapes');
+
+  for (let i = 0; i < BRUSH_SHAPES.length; i++) {
+    const shape = BRUSH_SHAPES[i];
+    btn.innerHTML = `… ${i + 1} / ${BRUSH_SHAPES.length}`;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1080;
+    drawBrushShape(canvas, shape, { silhouette: true });
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    folder.file(`brush-shape-${shape.id}.png`, blob);
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'brush-shapes.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  btn.disabled = false;
+  btn.innerHTML = origHTML;
+}
+
 function downloadShapePng(shape) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1080;
@@ -1230,11 +1246,7 @@ function buildBrushShapeSection() {
   dlAllBtn.className = 'panel-btn sm brush-dl-all-btn';
   dlAllBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Download All';
   dlAllBtn.title = 'Download all shapes as PNGs';
-  dlAllBtn.addEventListener('click', () => {
-    BRUSH_SHAPES.forEach((shape, i) => {
-      setTimeout(() => downloadShapePng(shape), i * 120);
-    });
-  });
+  dlAllBtn.addEventListener('click', () => downloadAllShapesZip(dlAllBtn));
 
   hdr.appendChild(titleWrap);
   hdr.appendChild(dlAllBtn);
@@ -1514,4 +1526,3 @@ document.addEventListener('DOMContentLoaded', () => {
   const section = buildBrushShapeSection();
   document.querySelector('main.concept-main')?.after(section);
 });
-
