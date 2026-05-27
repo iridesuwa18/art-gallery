@@ -86,16 +86,14 @@
 
       <!-- LEFT: comparison panel (hidden until (+) clicked) -->
       <div class="medium-compare-panel" id="mediumComparePanel" style="display:none">
-        <div class="modal-header">
-          <span class="panel-title medium-compare-title">Compare with…</span>
+        <div class="modal-header medium-compare-header">
+          <span class="panel-title medium-compare-title">Compare</span>
+          <select class="medium-compare-select" id="mediumCompareSelect">
+            <option value="">— choose a medium —</option>
+          </select>
           <button class="panel-close-btn" id="mediumCompareClose" title="Close comparison">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           </button>
-        </div>
-        <div class="medium-compare-select-wrap">
-          <select class="cat-value-select medium-compare-select" id="mediumCompareSelect">
-            <option value="">— choose a medium to compare —</option>
-          </select>
         </div>
         <div class="modal-body medium-detail-body" id="mediumCompareBody">
           <p class="medium-compare-empty">Select a medium above to see its details side by side.</p>
