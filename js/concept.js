@@ -25,6 +25,7 @@ const ART_MEDIUMS = [
   { name: 'Coloured Pencil (oil-based)', category: 'Dry Drawing', brushShape: 'Round', wetDry: 'Dry', stickability: 'Yes — slow', irregularity: 'Low', valueThickness: 'Moderate', naturalSize: 'Very thin', colourMode: 'Full colour', sizeDiff: 'Minimal', smergability: 'Slightly more than wax' },
   { name: 'Water-soluble Coloured Pencil', category: 'Dry Drawing', brushShape: 'Round', wetDry: 'Dry (activates wet)', stickability: 'Yes — slow (dry); fast (wet)', irregularity: 'Low (dry); Medium (wet)', valueThickness: 'Moderate (dry); Wide (wet)', naturalSize: 'Very thin', colourMode: 'Full colour', sizeDiff: 'Minimal (dry); Moderate (wet)', smergability: 'Yes when wet — bleeds and blooms' },
   { name: 'Graphite Powder / Stick', category: 'Dry Drawing', brushShape: 'Round / Formless', wetDry: 'Dry', stickability: 'Yes — depletes quickly', irregularity: 'High — very free-form', valueThickness: 'Wide', naturalSize: 'Large (broad application)', colourMode: 'Grayscale', sizeDiff: 'Yes', smergability: 'Highly smergable' },
+  { name: 'Silver / Metalpoint', category: 'Dry Drawing', brushShape: 'Round (tiny)', wetDry: 'Dry', stickability: 'Minimal — almost none', irregularity: 'Very Low — precise', valueThickness: 'Narrow: very consistent', naturalSize: 'Extremely thin', colourMode: 'Grayscale (warm grey to brown)', sizeDiff: 'None', smergability: 'No' },
   // Ink & Pen
   { name: 'Ballpoint Pen', category: 'Ink & Pen', brushShape: 'Round (tiny)', wetDry: 'Dry/Wet hybrid', stickability: 'Yes — ink depletes', irregularity: 'Very Low', valueThickness: 'Moderate: pressure affects flow slightly', naturalSize: 'Very thin', colourMode: 'Grayscale + limited colour', sizeDiff: 'Minimal', smergability: 'Minimal' },
   { name: 'Felt Tip / Marker (thin)', category: 'Ink & Pen', brushShape: 'Round', wetDry: 'Wet', stickability: 'Yes — ink runs out', irregularity: 'Low', valueThickness: 'Low: mostly flat value', naturalSize: 'Thin', colourMode: 'Full colour (or grayscale)', sizeDiff: 'Minimal', smergability: 'No — dries fast' },
@@ -169,7 +170,6 @@ let state = CATEGORY_DEFS.map(def => ({ defId: def.id, selections: [null] }));
 const genBody              = document.getElementById('genBody');
 const randomiseAllBtn      = document.getElementById('randomiseAllBtn');
 const downloadJsonBtn      = document.getElementById('downloadJsonBtn');
-const downloadPngBtn       = document.getElementById('downloadPngBtn');
 const previewContent       = document.getElementById('previewContent');
 const previewCard          = document.getElementById('previewCard');
 const previewTimerRing     = document.getElementById('previewTimerRing');
@@ -662,7 +662,30 @@ function loadConceptJson(json) {
   updatePreview();
 }
 
-downloadJsonBtn.addEventListener('click', () => {
+// ─── SETTINGS MENU ────────────────────────────────────────────
+const genSettingsBtn  = document.getElementById('genSettingsBtn');
+const genSettingsMenu = document.getElementById('genSettingsMenu');
+const genSettingsWrap = document.getElementById('genSettingsWrap');
+
+function openSettingsMenu() {
+  genSettingsMenu.classList.add('open');
+  genSettingsBtn.setAttribute('aria-expanded', 'true');
+}
+function closeSettingsMenu() {
+  genSettingsMenu.classList.remove('open');
+  genSettingsBtn.setAttribute('aria-expanded', 'false');
+}
+genSettingsBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  genSettingsMenu.classList.contains('open') ? closeSettingsMenu() : openSettingsMenu();
+});
+document.addEventListener('click', e => {
+  if (!genSettingsWrap.contains(e.target)) closeSettingsMenu();
+});
+genSettingsMenu.addEventListener('click', () => closeSettingsMenu());
+
+// ─── EXPORT JSON ──────────────────────────────────────────────
+document.getElementById('downloadJsonBtn').addEventListener('click', () => {
   const data = buildConceptJson();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -673,50 +696,244 @@ downloadJsonBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-if (downloadPngBtn) {
-  downloadPngBtn.addEventListener('click', async () => {
-    const target = previewCard;
-    if (!target) return;
+// ─── IMPORT JSON ──────────────────────────────────────────────
+const importJsonBtn  = document.getElementById('importJsonBtn');
+const importJsonFile = document.getElementById('importJsonFile');
 
-    const origLabel = downloadPngBtn.innerHTML;
-    downloadPngBtn.disabled = true;
-    downloadPngBtn.innerHTML = '…';
-
+importJsonBtn.addEventListener('click', () => importJsonFile.click());
+importJsonFile.addEventListener('change', () => {
+  const file = importJsonFile.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
     try {
-      // Dynamically load html2canvas if not already present
-      if (!window.html2canvas) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
+      const json = JSON.parse(e.target.result);
+      loadConceptJson(json);
+    } catch {
+      alert('Could not read JSON file — please check the format and try again.');
+    }
+  };
+  reader.readAsText(file);
+  importJsonFile.value = ''; // reset so same file can be re-imported
+});
+
+// ─── EXPORT PNG ───────────────────────────────────────────────
+document.getElementById('exportPngBtn').addEventListener('click', exportConceptPng);
+
+function exportConceptPng() {
+  const card = document.getElementById('previewCard');
+
+  // Collect concept data from current state
+  const sections = state.map(catState => {
+    const def = getDef(catState.defId);
+    const vals = catState.selections.filter(Boolean);
+    return { def, vals };
+  }).filter(s => s.vals.length > 0);
+
+  if (sections.length === 0) {
+    alert('Add some concept values first, then export.');
+    return;
+  }
+
+  // Resolve CSS custom properties from the document
+  const style = getComputedStyle(document.documentElement);
+  const theme = document.documentElement.dataset.theme || 'light';
+  const isDark = theme === 'dark';
+
+  const bgColor      = style.getPropertyValue('--bg').trim()      || (isDark ? '#121212' : '#FAFAFA');
+  const surfaceColor = style.getPropertyValue('--surface').trim() || (isDark ? '#1C1C1E' : '#FFFFFF');
+  const borderColor  = style.getPropertyValue('--border').trim()  || (isDark ? '#2C2C2E' : '#E0E0E0');
+  const textColor    = style.getPropertyValue('--text').trim()     || (isDark ? '#F0F0F0' : '#1A1A1A');
+  const textFaint    = style.getPropertyValue('--text-faint').trim() || (isDark ? '#888' : '#9E9E9E');
+  const bg2Color     = style.getPropertyValue('--bg-2').trim()    || (isDark ? '#1E1E20' : '#F5F5F5');
+  const borderLight  = style.getPropertyValue('--border-light').trim() || borderColor;
+
+  // Canvas setup — 2× for retina
+  const W = 960, scale = 2;
+  const canvas = document.createElement('canvas');
+
+  // Measure needed height first (dry run)
+  const padX = 64, padTop = 56, padBot = 48, gap = 20;
+  const labelH = 14, chipH = 28, chipGap = 8, sectionGap = 22;
+  let contentH = 0;
+  sections.forEach(({ def, vals }) => {
+    if (def.type === 'timer') { contentH += 80 + sectionGap; return; }
+    contentH += labelH + 8; // section label
+    // Chip wrapping
+    const chipFont = '14px DM Sans, sans-serif';
+    const tempCtx = document.createElement('canvas').getContext('2d');
+    tempCtx.font = chipFont;
+    let rowW = 0, rows = 1;
+    const maxRowW = W - padX * 2 - 2;
+    vals.forEach(val => {
+      const tw = tempCtx.measureText(val).width + (def.type === 'colour' ? 20 : 0) + 32;
+      if (rowW > 0 && rowW + tw + chipGap > maxRowW) { rows++; rowW = 0; }
+      rowW += tw + chipGap;
+    });
+    contentH += rows * (chipH + chipGap) - chipGap + sectionGap;
+  });
+  const totalH = padTop + 36 + gap + contentH + padBot; // 36 = "Current Concept" label area
+
+  canvas.width  = W * scale;
+  canvas.height = totalH * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  // Background
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, W, totalH);
+
+  // Card
+  const cardX = 40, cardY = 28, cardW = W - 80, cardH = totalH - 56;
+  const radius = 12;
+  ctx.fillStyle = surfaceColor;
+  roundRectPath(ctx, cardX, cardY, cardW, cardH, radius);
+  ctx.fill();
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // "CURRENT CONCEPT" label
+  ctx.font = '500 9px/1 "DM Sans", sans-serif';
+  ctx.fillStyle = textFaint;
+  ctx.letterSpacing = '0.26em';
+  ctx.fillStyle = textFaint;
+  ctx.font = '500 9px "DM Sans", sans-serif';
+  // letterSpacing not supported in canvas — approximate with manual spacing
+  drawTrackedText(ctx, 'CURRENT CONCEPT', cardX + padX - 40, cardY + 28, 3.2);
+
+  // Divider
+  ctx.strokeStyle = borderLight;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cardX + 1, cardY + 44);
+  ctx.lineTo(cardX + cardW - 1, cardY + 44);
+  ctx.stroke();
+
+  // Content
+  let y = cardY + 44 + padTop - 20;
+
+  sections.forEach(({ def, vals }) => {
+    if (def.type === 'timer') {
+      // Draw a simple timer circle
+      const timerMins = (() => {
+        const m = vals[0].match(/^(\d+(?:\.\d+)?)\s*(min|hr)/i);
+        if (!m) return 30;
+        return m[2].toLowerCase() === 'hr' ? parseFloat(m[1]) * 60 : parseFloat(m[1]);
+      })();
+      const h = Math.floor(timerMins / 60), m = timerMins % 60;
+      const label = h > 0 ? (m > 0 ? h + 'h ' + m + 'm' : h + 'h') : m + 'm';
+      const cx = cardX + padX - 40 + 36, cy2 = y + 36;
+      const r = 28, circumference = 2 * Math.PI * r;
+      const pct = Math.min(timerMins / 180, 1);
+
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy2, r, -Math.PI/2, Math.PI * 1.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = textColor;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx, cy2, r, -Math.PI/2, -Math.PI/2 + pct * 2 * Math.PI);
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+
+      ctx.fillStyle = textColor;
+      ctx.font = '300 13px "Cormorant Garamond", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, cx, cy2 + 5);
+      ctx.textAlign = 'left';
+
+      y += 80 + sectionGap;
+      return;
+    }
+
+    // Section label
+    drawTrackedText(ctx, def.label.toUpperCase(), cardX + padX - 40, y, 2.8, '500 8.5px "DM Sans", sans-serif', textFaint);
+    y += labelH + 8;
+
+    // Chips
+    const maxRowW2 = cardW - (padX - 40) * 2;
+    let rowX = cardX + padX - 40, rowY = y;
+    const chipPad = 14;
+
+    vals.forEach(val => {
+      ctx.font = '300 13px "DM Sans", sans-serif';
+      const textW = ctx.measureText(val).width;
+      const swatchW = def.type === 'colour' ? 18 : 0;
+      const cw = textW + swatchW + chipPad * 2 + (swatchW ? 6 : 0);
+
+      if (rowX > cardX + padX - 40 && rowX + cw > cardX + cardW - (padX - 40)) {
+        rowX = cardX + padX - 40;
+        rowY += chipH + chipGap;
       }
 
-      const canvas = await window.html2canvas(target, {
-        backgroundColor: null,
-        scale: 2,          // 2× for sharper output
-        useCORS: true,
-        logging: false,
-      });
+      // Chip background
+      ctx.fillStyle = bg2Color;
+      roundRectPath(ctx, rowX, rowY, cw, chipH, chipH / 2);
+      ctx.fill();
+      ctx.strokeStyle = borderLight;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
 
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'art-concept.png';
-        a.click();
-        URL.revokeObjectURL(url);
-      }, 'image/png');
-    } catch (err) {
-      console.error('PNG export failed:', err);
-      alert('Could not export PNG. Check console for details.');
-    } finally {
-      downloadPngBtn.disabled = false;
-      downloadPngBtn.innerHTML = origLabel;
-    }
+      // Colour swatch
+      let textStartX = rowX + chipPad;
+      if (def.type === 'colour') {
+        const colData = getColour(val);
+        if (colData) {
+          ctx.fillStyle = colData.hex;
+          ctx.beginPath();
+          ctx.arc(rowX + chipPad + 5, rowY + chipH / 2, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+        textStartX = rowX + chipPad + 14;
+      }
+
+      ctx.fillStyle = textColor;
+      ctx.font = '300 13px "DM Sans", sans-serif';
+      ctx.fillText(val, textStartX, rowY + chipH / 2 + 4.5);
+
+      rowX += cw + chipGap;
+    });
+
+    y = rowY + chipH + sectionGap;
   });
+
+  // Download
+  const link = document.createElement('a');
+  link.download = 'art-concept.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawTrackedText(ctx, text, x, y, tracking = 0, font, color) {
+  if (font)  ctx.font = font;
+  if (color) ctx.fillStyle = color;
+  let cx = x;
+  for (const ch of text) {
+    ctx.fillText(ch, cx, y);
+    cx += ctx.measureText(ch).width + tracking;
+  }
 }
 
 randomiseAllBtn.addEventListener('click', randomiseAll);
@@ -754,16 +971,21 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const r = Math.min(W, H) * 0.38;
+      const rx = W * 0.18, ry = H * 0.28;
+      // Body
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.ellipse(cx, cy + H*0.04, rx, ry, 0, 0, Math.PI*2);
       ctx.fill();
-      // Soft highlight
+      // Ferrule
+      drawFerrule(ctx, cx, cy + H*0.04 - ry + H*0.06, W*0.13, H*0.09);
+      // Handle
+      drawHandle(ctx, cx, cy + H*0.04 - ry + H*0.04 - H*0.09, H*0.32);
+      // Tip highlight
       ctx.save();
       ctx.globalAlpha = 0.18;
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.ellipse(cx - r*0.28, cy - r*0.22, r*0.32, r*0.22, -0.4, 0, Math.PI*2);
+      ctx.ellipse(cx - rx*0.28, cy + H*0.04 + ry - H*0.08, rx*0.32, H*0.06, -0.3, 0, Math.PI*2);
       ctx.fill();
       ctx.restore();
     }
@@ -775,20 +997,12 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      // Small dot — same shape as Round but noticeably smaller
-      const r = S * 0.18;
+      const rx = W * 0.045, ry = H * 0.30;
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.ellipse(cx, cy + H*0.05, rx, ry, 0, 0, Math.PI*2);
       ctx.fill();
-      // Soft highlight
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.ellipse(cx - r*0.28, cy - r*0.22, r*0.32, r*0.22, -0.4, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
+      drawFerrule(ctx, cx, cy + H*0.05 - ry + H*0.05, W*0.10, H*0.08);
+      drawHandle(ctx, cx, cy + H*0.05 - ry + H*0.03 - H*0.08, H*0.33);
     }
   },
   {
@@ -798,20 +1012,22 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const bw = S * 0.62, bh = S * 0.42;
-      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.04);
+      const bw = W*0.36, bh = H*0.22, by = cy + H*0.08;
+      // Bristle head
+      roundRect(ctx, cx - bw/2, by - bh/2, bw, bh, W*0.025);
       ctx.fill();
       // Bristle texture lines
       ctx.save();
       ctx.globalAlpha = 0.13;
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = S*0.008;
-      for (let i = 1; i < 7; i++) {
-        const x = cx - bw/2 + bw*(i/7);
-        ctx.beginPath(); ctx.moveTo(x, cy - bh/2 + 4); ctx.lineTo(x, cy + bh/2 - 4); ctx.stroke();
+      ctx.lineWidth = W*0.006;
+      for (let i = 1; i < 6; i++) {
+        const x = cx - bw/2 + bw*(i/6);
+        ctx.beginPath(); ctx.moveTo(x, by - bh/2 + 4); ctx.lineTo(x, by + bh/2 - 4); ctx.stroke();
       }
       ctx.restore();
+      drawFerrule(ctx, cx, by - bh/2 - H*0.025, W*0.18, H*0.06);
+      drawHandle(ctx, cx, by - bh/2 - H*0.025 - H*0.06, H*0.30);
     }
   },
   {
@@ -821,14 +1037,15 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const bw = S * 0.58, bh = S * 0.42;
+      const bw = W*0.34, bh = H*0.20, by = cy + H*0.08;
       ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(0.22);
-      roundRect(ctx, -bw/2, -bh/2, bw, bh, S*0.04);
+      ctx.translate(cx, by);
+      ctx.rotate(0.18);
+      roundRect(ctx, -bw/2, -bh/2, bw, bh, W*0.02);
       ctx.fill();
       ctx.restore();
+      drawFerrule(ctx, cx, by - bh/2 - H*0.02, W*0.17, H*0.06);
+      drawHandle(ctx, cx, by - bh/2 - H*0.02 - H*0.06, H*0.30);
     }
   },
   {
@@ -838,16 +1055,17 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const bw = S * 0.60, bh = S * 0.38;
-      // Flat top, rounded bottom
+      const bw = W*0.26, bh = H*0.24, by = cy + H*0.07;
+      // Body with rounded bottom only
       ctx.beginPath();
-      ctx.moveTo(cx - bw/2, cy - bh/2);
-      ctx.lineTo(cx + bw/2, cy - bh/2);
-      ctx.lineTo(cx + bw/2, cy + bh/2 - bw/2);
-      ctx.arc(cx, cy + bh/2 - bw/2, bw/2, 0, Math.PI);
+      ctx.moveTo(cx - bw/2, by - bh/2);
+      ctx.lineTo(cx + bw/2, by - bh/2);
+      ctx.lineTo(cx + bw/2, by + bh/2 - bw/2);
+      ctx.arc(cx, by + bh/2 - bw/2, bw/2, 0, Math.PI);
       ctx.closePath();
       ctx.fill();
+      drawFerrule(ctx, cx, by - bh/2 - H*0.02, W*0.155, H*0.065);
+      drawHandle(ctx, cx, by - bh/2 - H*0.02 - H*0.065, H*0.30);
     }
   },
   {
@@ -856,10 +1074,10 @@ const BRUSH_SHAPES = [
     desc: 'Spread fan of bristles for texturing, blending, and foliage.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2 + H*0.12;
-      const S = Math.min(W, H);
-      const r = S * 0.44, spread = Math.PI * 0.80;
+      const cx = W/2, cy = H/2 + H*0.05;
+      const r = H * 0.24, spread = Math.PI * 0.72;
       const start = -Math.PI/2 - spread/2, end = -Math.PI/2 + spread/2;
+      // Fan arc
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, r, start, end);
@@ -869,15 +1087,17 @@ const BRUSH_SHAPES = [
       ctx.save();
       ctx.globalAlpha = 0.15;
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = S * 0.010;
-      for (let i = 1; i < 9; i++) {
-        const a = start + (spread * i/9);
+      ctx.lineWidth = W * 0.008;
+      for (let i = 1; i < 8; i++) {
+        const a = start + (spread * i/8);
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
+        ctx.moveTo(cx + 8, cy);
         ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
         ctx.stroke();
       }
       ctx.restore();
+      drawFerrule(ctx, cx, cy - H*0.04, W*0.10, H*0.065);
+      drawHandle(ctx, cx, cy - H*0.04 - H*0.065, H*0.30);
     }
   },
   {
@@ -887,11 +1107,12 @@ const BRUSH_SHAPES = [
     mediums: [],
     draw(ctx, W, H) {
       const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const rx = S * 0.28, ry = S * 0.40;
+      const bw = W*0.22, bh = H*0.26, by = cy + H*0.07;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+      ctx.ellipse(cx, by, bw/2, bh/2, 0, 0, Math.PI*2);
       ctx.fill();
+      drawFerrule(ctx, cx, by - bh/2 - H*0.015, W*0.15, H*0.065);
+      drawHandle(ctx, cx, by - bh/2 - H*0.015 - H*0.065, H*0.30);
     }
   },
   {
@@ -900,16 +1121,17 @@ const BRUSH_SHAPES = [
     desc: 'Oval body tapering to a pointed tip — used by quill pens.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const rx = S * 0.30, ry = S * 0.38;
-      // Pointed at bottom, rounded at top
+      const cx = W/2, cy = H/2 + H*0.04;
+      const rx = W*0.12, ry = H*0.26;
+      // Pointed tip at bottom
       ctx.beginPath();
       ctx.moveTo(cx, cy + ry);
-      ctx.bezierCurveTo(cx + rx*0.6, cy + ry*0.5, cx + rx, cy - ry*0.2, cx + rx*0.15, cy - ry);
-      ctx.bezierCurveTo(cx, cy - ry*1.04, cx, cy - ry*1.04, cx - rx*0.15, cy - ry);
-      ctx.bezierCurveTo(cx - rx, cy - ry*0.2, cx - rx*0.6, cy + ry*0.5, cx, cy + ry);
+      ctx.bezierCurveTo(cx + rx*0.6, cy + ry*0.4, cx + rx, cy - ry*0.3, cx + rx*0.2, cy - ry);
+      ctx.bezierCurveTo(cx, cy - ry*1.05, cx, cy - ry*1.05, cx - rx*0.2, cy - ry);
+      ctx.bezierCurveTo(cx - rx, cy - ry*0.3, cx - rx*0.6, cy + ry*0.4, cx, cy + ry);
       ctx.fill();
+      drawFerrule(ctx, cx, cy - ry - H*0.01, W*0.10, H*0.06);
+      drawHandle(ctx, cx, cy - ry - H*0.01 - H*0.06, H*0.28);
     }
   },
   {
@@ -918,15 +1140,16 @@ const BRUSH_SHAPES = [
     desc: 'Round base tapering to a fine point — for calligraphy brush pens.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const bw = S * 0.50, tipY = cy + S*0.32, baseY = cy - S*0.20;
+      const cx = W/2, cy = H/2 + H*0.05;
+      const bw = W*0.16, tipY = cy + H*0.28, baseY = cy - H*0.10;
       ctx.beginPath();
       ctx.moveTo(cx, tipY);
-      ctx.bezierCurveTo(cx + bw*0.3, cy + S*0.15, cx + bw/2, baseY + S*0.08, cx + bw/2, baseY);
+      ctx.bezierCurveTo(cx + bw*0.3, cy + H*0.1, cx + bw/2, baseY + H*0.06, cx + bw/2, baseY);
       ctx.arc(cx, baseY, bw/2, 0, Math.PI, true);
-      ctx.bezierCurveTo(cx - bw/2, baseY + S*0.08, cx - bw*0.3, cy + S*0.15, cx, tipY);
+      ctx.bezierCurveTo(cx - bw/2, baseY + H*0.06, cx - bw*0.3, cy + H*0.1, cx, tipY);
       ctx.fill();
+      drawFerrule(ctx, cx, baseY - H*0.025, W*0.12, H*0.06);
+      drawHandle(ctx, cx, baseY - H*0.025 - H*0.06, H*0.28);
     }
   },
   {
@@ -935,18 +1158,24 @@ const BRUSH_SHAPES = [
     desc: 'Rounded head with a blunt flat bottom — oil pastels and chunky media.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const rx = S * 0.36, ry = S * 0.36;
-      const topY  = cy - ry * 0.55;  // centre of the dome arc
-      const flatY = cy + ry * 0.55;  // y of the flat bottom edge
-      // Dome top (semicircle), straight sides, flat bottom
+      const cx = W/2, cy = H/2 + H*0.04;
+      const rx = W*0.17, ry = H*0.21;
+      // Flat bottom, domed top
       ctx.beginPath();
-      ctx.arc(cx, topY, rx, Math.PI, 0);   // dome left → right
-      ctx.lineTo(cx + rx, flatY);            // right side down
-      ctx.lineTo(cx - rx, flatY);            // flat bottom
+      ctx.arc(cx, cy - ry*0.3, rx, Math.PI, 0);
+      ctx.lineTo(cx + rx, cy + ry*0.7);
+      ctx.arc(cx, cy + ry*0.7, rx, 0, Math.PI);
       ctx.closePath();
       ctx.fill();
+      // No ferrule/handle — this is a pastel/crayon body shape
+      // Flat bottom edge highlight
+      ctx.save();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + ry*0.7, rx*0.8, H*0.018, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
     }
   },
   {
@@ -955,15 +1184,14 @@ const BRUSH_SHAPES = [
     desc: 'Square-tipped tool — conté crayons, square brushes.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const s = S * 0.66;
-      roundRect(ctx, cx - s/2, cy - s/2, s, s, S*0.04);
+      const cx = W/2, cy = H/2 + H*0.04;
+      const s = W * 0.26;
+      roundRect(ctx, cx - s/2, cy - s*0.9, s, s*1.8, W*0.015);
       ctx.fill();
       ctx.save();
       ctx.globalAlpha = 0.13;
       ctx.fillStyle = '#fff';
-      roundRect(ctx, cx - s/2 + s*0.08, cy - s/2 + s*0.08, s*0.22, s*0.78, S*0.02);
+      roundRect(ctx, cx - s/2 + s*0.08, cy - s*0.9 + s*0.08, s*0.28, s*1.6, W*0.01);
       ctx.fill();
       ctx.restore();
     }
@@ -974,16 +1202,21 @@ const BRUSH_SHAPES = [
     desc: 'Flat chisel end — reed pens, bamboo pens, broad-edge tools.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      // Landscape rectangle — clearly wider than tall but not paper-thin
-      const bw = S * 0.62, bh = S * 0.36;
-      roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, S*0.025);
+      const cx = W/2, cy = H/2 + H*0.04;
+      const bw = W*0.30, bh = H*0.07;
+      const bodyH = H * 0.32;
+      // Body (shaft)
+      roundRect(ctx, cx - bw*0.18, cy - bodyH/2, bw*0.36, bodyH, W*0.012);
+      ctx.fill();
+      // Chisel tip
+      ctx.beginPath();
+      ctx.rect(cx - bw/2, cy + bodyH/2 - H*0.01, bw, bh);
       ctx.fill();
       ctx.save();
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = '#fff';
-      roundRect(ctx, cx - bw/2 + S*0.03, cy - bh/2 + S*0.03, bw*0.28, bh - S*0.06, S*0.012);
+      ctx.beginPath();
+      ctx.rect(cx - bw*0.5 + 2, cy + bodyH/2, bw*0.35, bh - 2);
       ctx.fill();
       ctx.restore();
     }
@@ -994,29 +1227,30 @@ const BRUSH_SHAPES = [
     desc: 'Triangular body (like a wax crayon) with a rounded tip.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const r = S * 0.38;
-      // Equilateral triangle with rounded corners
-      const pts = [0, 1, 2].map(i => {
-        const a = (i * 2*Math.PI/3) - Math.PI/2;
-        return [cx + Math.cos(a)*r, cy + Math.sin(a)*r];
-      });
-      const cr = S * 0.06; // corner radius
+      const cx = W/2, cy = H/2 + H*0.06;
+      const r = W * 0.20, h = H * 0.52;
+      // Triangular prism — 3 faces visible
+      const top = cy - h/2;
+      const bot = cy + h/2;
+      // Front face
       ctx.beginPath();
-      pts.forEach(([px, py], i) => {
-        const [ax, ay] = pts[(i + pts.length - 1) % pts.length];
-        const [bx, by] = pts[(i + 1) % pts.length];
-        const d1x = px - ax, d1y = py - ay, l1 = Math.hypot(d1x, d1y);
-        const d2x = bx - px, d2y = by - py, l2 = Math.hypot(d2x, d2y);
-        const t1x = px - cr * d1x/l1, t1y = py - cr * d1y/l1;
-        const t2x = px + cr * d2x/l2, t2y = py + cr * d2y/l2;
-        if (i === 0) ctx.moveTo(t1x, t1y);
-        else ctx.lineTo(t1x, t1y);
-        ctx.quadraticCurveTo(px, py, t2x, t2y);
-      });
+      ctx.moveTo(cx - r, top + r*0.3);
+      ctx.lineTo(cx + r, top + r*0.3);
+      ctx.lineTo(cx + r*0.6, bot);
+      ctx.arc(cx, bot, r*0.6, 0, Math.PI);
       ctx.closePath();
       ctx.fill();
+      // Edge highlight
+      ctx.save();
+      ctx.globalAlpha = 0.17;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(cx - r*0.05, top + r*0.3);
+      ctx.lineTo(cx + r*0.05, top + r*0.3);
+      ctx.lineTo(cx + r*0.05, bot - r*0.3);
+      ctx.lineTo(cx - r*0.05, bot - r*0.3);
+      ctx.fill();
+      ctx.restore();
     }
   },
   {
@@ -1025,9 +1259,8 @@ const BRUSH_SHAPES = [
     desc: 'Rough, uneven bristle edges — charcoal sticks and expressive media.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const rx = S * 0.38, ry = S * 0.38;
+      const cx = W/2, cy = H/2 + H*0.04;
+      const rx = W*0.20, ry = H*0.28;
       // Irregular blob
       ctx.beginPath();
       const pts = 18;
@@ -1040,6 +1273,8 @@ const BRUSH_SHAPES = [
       }
       ctx.closePath();
       ctx.fill();
+      drawFerrule(ctx, cx, cy - ry - H*0.01, W*0.14, H*0.07);
+      drawHandle(ctx, cx, cy - ry - H*0.01 - H*0.07, H*0.28);
     }
   },
   {
@@ -1048,15 +1283,14 @@ const BRUSH_SHAPES = [
     desc: 'Free-form application — graphite powder, sponge, or broad tools.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      // Diffuse cloud-like shape — square-proportioned blobs
+      const cx = W/2, cy = H/2 + H*0.05;
+      // Diffuse cloud-like shape
       const blobs = [
-        [cx,          cy,          S*0.26, S*0.26, 1.0],
-        [cx + S*0.14, cy - S*0.10, S*0.18, S*0.18, 0.7],
-        [cx - S*0.15, cy - S*0.08, S*0.17, S*0.17, 0.7],
-        [cx + S*0.10, cy + S*0.14, S*0.18, S*0.18, 0.65],
-        [cx - S*0.12, cy + S*0.12, S*0.16, S*0.16, 0.6],
+        [cx, cy, W*0.22, H*0.20, 1.0],
+        [cx + W*0.12, cy - H*0.06, W*0.16, H*0.15, 0.7],
+        [cx - W*0.13, cy - H*0.04, W*0.15, H*0.14, 0.7],
+        [cx + W*0.08, cy + H*0.10, W*0.17, H*0.13, 0.65],
+        [cx - W*0.10, cy + H*0.09, W*0.14, H*0.12, 0.6],
       ];
       blobs.forEach(([bx, by, brx, bry, a]) => {
         ctx.save();
@@ -1074,11 +1308,11 @@ const BRUSH_SHAPES = [
     desc: 'Airbrushed soft-edged spray — feathered circular falloff.',
     mediums: [],
     draw(ctx, W, H) {
-      const cx = W/2, cy = H/2;
-      const S = Math.min(W, H);
-      const r = S * 0.42;
+      const cx = W/2, cy = H/2 + H*0.03;
+      const r = W * 0.28;
       // Radial gradient falloff
       const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      // Use the current fill colour from ctx
       const col = ctx.fillStyle;
       grd.addColorStop(0,   col);
       grd.addColorStop(0.4, col);
@@ -1221,49 +1455,6 @@ function buildShapeThumbnail(shape) {
 }
 
 // ── Download 1080×1080 PNG (white silhouette on transparent background) ──
-// ── Download all shapes as a single ZIP ──────────────────────
-async function downloadAllShapesZip(btn) {
-  const origHTML = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '… building zip';
-
-  // Load JSZip from CDN if not already present
-  if (!window.JSZip) {
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  const zip = new window.JSZip();
-  const folder = zip.folder('brush-shapes');
-
-  for (let i = 0; i < BRUSH_SHAPES.length; i++) {
-    const shape = BRUSH_SHAPES[i];
-    btn.innerHTML = `… ${i + 1} / ${BRUSH_SHAPES.length}`;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 1080;
-    drawBrushShape(canvas, shape, { silhouette: true });
-
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    folder.file(`brush-shape-${shape.id}.png`, blob);
-  }
-
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(zipBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'brush-shapes.zip';
-  a.click();
-  URL.revokeObjectURL(url);
-
-  btn.disabled = false;
-  btn.innerHTML = origHTML;
-}
-
 function downloadShapePng(shape) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1080;
@@ -1302,7 +1493,11 @@ function buildBrushShapeSection() {
   dlAllBtn.className = 'panel-btn sm brush-dl-all-btn';
   dlAllBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Download All';
   dlAllBtn.title = 'Download all shapes as PNGs';
-  dlAllBtn.addEventListener('click', () => downloadAllShapesZip(dlAllBtn));
+  dlAllBtn.addEventListener('click', () => {
+    BRUSH_SHAPES.forEach((shape, i) => {
+      setTimeout(() => downloadShapePng(shape), i * 120);
+    });
+  });
 
   hdr.appendChild(titleWrap);
   hdr.appendChild(dlAllBtn);
@@ -1381,60 +1576,34 @@ function buildBrushShapeSection() {
     medSel.appendChild(grp);
   });
 
-  // Shared state — declared here so all closures below share the same reference
-  let currentChooserMedium = null;
-  let currentChooserShape  = null;
-
-  const COPY_ICON = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-    <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-  </svg>`;
-  const CHECK_ICON = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2.5 8.5L6 12L13.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`;
-
   // Copy btn — left of dropdown
   const chooserCopyBtn = document.createElement('button');
   chooserCopyBtn.className = 'panel-btn sm chooser-copy-btn';
   chooserCopyBtn.title = 'Copy brush shape name';
   chooserCopyBtn.style.display = 'none';
-  chooserCopyBtn.innerHTML = COPY_ICON;
+  chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+    <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+  </svg>`;
 
   chooserCopyBtn.addEventListener('click', () => {
-    if (!currentChooserMedium) return;
-    const text = `${currentChooserMedium.name} — ${currentChooserMedium.brushShape}`;
-
-    const showCheck = () => {
-      chooserCopyBtn.innerHTML = CHECK_ICON;
+    const text = currentChooserMedium
+      ? `${currentChooserMedium.name} — ${currentChooserMedium.brushShape}`
+      : '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2.5 8.5L6 12L13.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
       chooserCopyBtn.classList.add('copied');
       setTimeout(() => {
-        chooserCopyBtn.innerHTML = COPY_ICON;
+        chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>`;
         chooserCopyBtn.classList.remove('copied');
       }, 1500);
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(showCheck).catch(() => {
-        // Fallback for non-secure contexts
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showCheck();
-      });
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showCheck();
-    }
+    });
   });
 
   // Download btn for chooser
@@ -1493,6 +1662,8 @@ function buildBrushShapeSection() {
   section.appendChild(chooserWrap);
 
   // ── Medium select handler ──
+  let currentChooserMedium = null;
+  let currentChooserShape = null;
 
   medSel.addEventListener('change', () => {
     const medName = medSel.value;
@@ -1516,9 +1687,9 @@ function buildBrushShapeSection() {
     emptyMsg.style.display = 'none';
     chooserCanvas.style.display = 'block';
     chooserMeta.style.display = 'flex';
-    chooserDlBtn.style.display    = 'inline-flex';
-    chooserInfoBtn.style.display  = 'inline-flex';
-    chooserCopyBtn.style.display  = 'inline-flex';
+    chooserDlBtn.style.display = '';
+    chooserInfoBtn.style.display = '';
+    chooserCopyBtn.style.display = '';
 
     drawBrushShape(chooserCanvas, shape, { label: false, unified: true });
     chooserShapeName.textContent = shape.label;
