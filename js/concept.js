@@ -1335,34 +1335,60 @@ function buildBrushShapeSection() {
     medSel.appendChild(grp);
   });
 
+  // Shared state — declared here so all closures below share the same reference
+  let currentChooserMedium = null;
+  let currentChooserShape  = null;
+
+  const COPY_ICON = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+    <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+  </svg>`;
+  const CHECK_ICON = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2.5 8.5L6 12L13.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+
   // Copy btn — left of dropdown
   const chooserCopyBtn = document.createElement('button');
   chooserCopyBtn.className = 'panel-btn sm chooser-copy-btn';
   chooserCopyBtn.title = 'Copy brush shape name';
   chooserCopyBtn.style.display = 'none';
-  chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-    <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-  </svg>`;
+  chooserCopyBtn.innerHTML = COPY_ICON;
 
   chooserCopyBtn.addEventListener('click', () => {
-    const text = currentChooserMedium
-      ? `${currentChooserMedium.name} — ${currentChooserMedium.brushShape}`
-      : '';
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M2.5 8.5L6 12L13.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
+    if (!currentChooserMedium) return;
+    const text = `${currentChooserMedium.name} — ${currentChooserMedium.brushShape}`;
+
+    const showCheck = () => {
+      chooserCopyBtn.innerHTML = CHECK_ICON;
       chooserCopyBtn.classList.add('copied');
       setTimeout(() => {
-        chooserCopyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-          <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>`;
+        chooserCopyBtn.innerHTML = COPY_ICON;
         chooserCopyBtn.classList.remove('copied');
       }, 1500);
-    });
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCheck).catch(() => {
+        // Fallback for non-secure contexts
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showCheck();
+      });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showCheck();
+    }
   });
 
   // Download btn for chooser
@@ -1421,8 +1447,6 @@ function buildBrushShapeSection() {
   section.appendChild(chooserWrap);
 
   // ── Medium select handler ──
-  let currentChooserMedium = null;
-  let currentChooserShape = null;
 
   medSel.addEventListener('change', () => {
     const medName = medSel.value;
@@ -1446,9 +1470,9 @@ function buildBrushShapeSection() {
     emptyMsg.style.display = 'none';
     chooserCanvas.style.display = 'block';
     chooserMeta.style.display = 'flex';
-    chooserDlBtn.style.display = '';
-    chooserInfoBtn.style.display = '';
-    chooserCopyBtn.style.display = '';
+    chooserDlBtn.style.display    = 'inline-flex';
+    chooserInfoBtn.style.display  = 'inline-flex';
+    chooserCopyBtn.style.display  = 'inline-flex';
 
     drawBrushShape(chooserCanvas, shape, { label: false, unified: true });
     chooserShapeName.textContent = shape.label;
