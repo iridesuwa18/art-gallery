@@ -561,10 +561,8 @@ function populateMediumDetailBody(bodyEl, m) {
   });
 }
 
-// Populate the compare dropdown (all mediums, grouped)
-function populateCompareSelect() {
-  // Keep the placeholder option
-  while (mediumCompareSelect.options.length > 1) mediumCompareSelect.remove(1);
+// Populate compare dropdown once at startup — prevents duplicate optgroups on re-open
+(function initCompareSelect() {
   const cats = [...new Set(ART_MEDIUMS.map(m => m.category))];
   cats.forEach(cat => {
     const grp = document.createElement('optgroup');
@@ -577,10 +575,9 @@ function populateCompareSelect() {
     });
     mediumCompareSelect.appendChild(grp);
   });
-}
+})();
 
 function openComparePanel() {
-  populateCompareSelect();
   mediumCompareSelect.value = '';
   mediumCompareBody.innerHTML = '<p class="medium-compare-empty">Select a medium above to see its details side by side.</p>';
   mediumComparePanel.style.display = 'flex';
