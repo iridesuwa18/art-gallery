@@ -59,6 +59,28 @@
             "timer": "1 hr",
             "style": "Impressionism"
           }
+        },
+        {
+          "id": "art_1780059513474",
+          "url": "/api/img?f=20260529-thestilldark.jpg",
+          "title": "The Still Dark",
+          "date": "2026-05-29",
+          "description": "In a lair was placed a set of items known to be able to summon a living person but it was only drawn and recorded in an ancient book, the same one in the painting.",
+          "textPosition": "left",
+          "concept": {
+            "medium": [
+              "Coloured Pencil (wax-based)",
+              "Graphite Pencil (B–9B)"
+            ],
+            "colour": [
+              "Lavender",
+              "Ivory"
+            ],
+            "theme": "Still Life",
+            "genre": "Dark Fantasy",
+            "timer": "30 min",
+            "style": "Impressionism"
+          }
         }
       ]
     }
