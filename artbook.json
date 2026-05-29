@@ -37,7 +37,30 @@
     {
       "id": "page_1780059268267",
       "layout": "medium",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1780059414553",
+          "url": "/api/img?f=20260528-thevanguard.jpg",
+          "title": "The Vanguard",
+          "date": "2026-05-28",
+          "description": "The angelic being of dark chaos poses an ironic spin to a story that goes deeper than it looks. Said to be the vanguard, a title is all there is for him.",
+          "textPosition": "right",
+          "concept": {
+            "medium": [
+              "Mechanical Pencil",
+              "Charcoal Stick (Vine)"
+            ],
+            "colour": [
+              "Blue",
+              "Maroon"
+            ],
+            "theme": "Figure Study",
+            "genre": "Ethereal",
+            "timer": "1 hr",
+            "style": "Impressionism"
+          }
+        }
+      ]
     }
   ]
 }
