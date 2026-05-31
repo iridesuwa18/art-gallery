@@ -663,27 +663,11 @@
       // width/height on a shim div (or on a4Frame's parent placeholder).
       // Simpler: set a4Frame width/height to the *scaled* pixel size while
       // keeping the inner layout unchanged via transform.
-      // Expand the viewport to touch the header/footer when zoomed
-      if (zoomLevel > 1.0) {
-        viewport.style.maxHeight = 'calc(100dvh - var(--header-h) - var(--nav-h))';
-        viewport.style.maxWidth = 'calc((100dvh - var(--header-h) - var(--nav-h)) / 1.4142)';
-      } else {
-        // Reset to original CSS constraints (with the 80px slack) at 100%
-        viewport.style.maxHeight = '';
-        viewport.style.maxWidth = '';
-      }
-
-      // Recalculate vpW and vpH after altering the viewport size
-      const newVpW = viewport.offsetWidth;
-      const newVpH = viewport.offsetHeight;
-
-      // The scaled frame's rendered size is newVpW*zoom × newVpH*zoom.
-      const scaledW = newVpW * zoomLevel;
-      const scaledH = newVpH * zoomLevel;
-      
-      a4Frame.style.marginRight  = (scaledW - newVpW) + 'px';
-      a4Frame.style.marginBottom = (scaledH - newVpH) + 'px';
-
+      // The scaled frame's rendered size is baseW*zoom × baseH*zoom.
+      const scaledW = vpW * zoomLevel;
+      const scaledH = vpH * zoomLevel;
+      a4Frame.style.marginRight  = (scaledW - vpW) + 'px';
+      a4Frame.style.marginBottom = (scaledH - vpH) + 'px';
       // Restore anchor: scroll so the same content point is under the cursor.
       const ratio = zoomLevel / oldZoom;
       viewport.scrollLeft = oldContentX * ratio - anchorFracX * vpW;
