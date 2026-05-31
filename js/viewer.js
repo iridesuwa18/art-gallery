@@ -634,48 +634,44 @@
     let zoomLevel = 1.0;
     const MIN_ZOOM = 1.0, MAX_ZOOM = 2.0, STEP = 0.05;
 
-    // -- Apply zoom via CSS transform: scale() ----------------------
-    // The a4Frame stays at its natural CSS size at all times.
-    // transform: scale(z) enlarges it as a single visual unit so every
-    // pixel inside scales uniformly — no reflow, no broken layouts.
-    // The viewport wrapper is sized to the *base* frame dimensions and
-    // set to overflow: auto so the scaled-up frame can be scrolled/panned.
+    // -- Apply zoom by physically resizing the a4Frame ---------------
+    // The a4Frame grows to baseW*zoom × baseH*zoom in actual pixel size.
+    // --a4-w / --a4-h CSS vars are kept at the *base* (unzoomed) viewport
+    // dimensions so all internal font/spacing calc()s remain correct.
+    // The viewport is a fixed-size overflow:auto window — the enlarged
+    // frame pans inside it. Pan limits are naturally clamped by the real
+    // scrollable area (no hacks needed).
     function applyZoom(newZoom, anchorFracX, anchorFracY) {
       if (anchorFracX === undefined) anchorFracX = 0.5;
       if (anchorFracY === undefined) anchorFracY = 0.5;
 
-      const vpW = viewport.offsetWidth;
-      const vpH = viewport.offsetHeight;
+      // Base dimensions = the viewport's stable CSS size (unzoomed).
+      const baseW = viewport.offsetWidth;
+      const baseH = viewport.offsetHeight;
 
-      // Capture the content-space point we want to keep under the anchor.
-      const oldContentX = viewport.scrollLeft + anchorFracX * vpW;
-      const oldContentY = viewport.scrollTop  + anchorFracY * vpH;
+      // Content-space point under the anchor before zoom.
+      const oldContentX = viewport.scrollLeft + anchorFracX * baseW;
+      const oldContentY = viewport.scrollTop  + anchorFracY * baseH;
 
       const oldZoom = zoomLevel;
       zoomLevel = newZoom;
 
-      // Scale the frame uniformly as one unit.
-      a4Frame.style.transform       = `scale(${zoomLevel})`;
-      a4Frame.style.transformOrigin = 'top left';
+      // Physically resize the frame to the zoomed pixel dimensions.
+      const scaledW = baseW * zoomLevel;
+      const scaledH = baseH * zoomLevel;
+      a4Frame.style.width  = scaledW + 'px';
+      a4Frame.style.height = scaledH + 'px';
 
-      // The scaled frame's rendered size is baseW*zoom × baseH*zoom.
-      // To make the viewport scrollable to that full area we set an explicit
-      // width/height on a shim div (or on a4Frame's parent placeholder).
-      // Simpler: set a4Frame width/height to the *scaled* pixel size while
-      // keeping the inner layout unchanged via transform.
-      // We achieve this by wrapping the transform with explicit outer dims:
-      const scaledW = vpW * zoomLevel;
-      const scaledH = vpH * zoomLevel;
-      // The frame visually fills scaledW×scaledH but its layout box is still
-      // vpW×vpH (transform doesn't affect layout). We need the scroll
-      // container to know the true rendered size. Use a margin trick:
-      a4Frame.style.marginRight  = (scaledW - vpW) + 'px';
-      a4Frame.style.marginBottom = (scaledH - vpH) + 'px';
+      // Keep --a4-w / --a4-h at BASE size so internal proportions don't
+      // change — text/images scale because the frame is physically larger,
+      // not because the CSS vars change.
+      a4Frame.style.setProperty('--a4-w', baseW + 'px');
+      a4Frame.style.setProperty('--a4-h', baseH + 'px');
 
-      // Restore anchor: scroll so the same content point is under the cursor.
+      // Restore anchor: map the same content point under the cursor.
       const ratio = zoomLevel / oldZoom;
-      viewport.scrollLeft = oldContentX * ratio - anchorFracX * vpW;
-      viewport.scrollTop  = oldContentY * ratio - anchorFracY * vpH;
+      viewport.scrollLeft = oldContentX * ratio - anchorFracX * baseW;
+      viewport.scrollTop  = oldContentY * ratio - anchorFracY * baseH;
 
       // UI
       zoomSlider.value = Math.round(zoomLevel * 100);
@@ -741,9 +737,9 @@
     // -- Reset on page change ------------------------------------
     function resetZoomPan() {
       zoomLevel = 1.0;
-      a4Frame.style.transform    = '';
-      a4Frame.style.marginRight  = '';
-      a4Frame.style.marginBottom = '';
+      // Return frame to natural 100% × 100% of its viewport parent.
+      a4Frame.style.width  = '';
+      a4Frame.style.height = '';
       viewport.scrollLeft = 0;
       viewport.scrollTop  = 0;
       zoomSlider.value = 100;
@@ -751,6 +747,8 @@
       zoomOutBtn.disabled = true;
       zoomInBtn.disabled  = false;
       viewport.classList.remove('can-pan', 'is-panning');
+      // Re-sync CSS vars to current base size after reset.
+      updateA4Vars();
     }
     if (prevBtn) prevBtn.addEventListener('click', resetZoomPan);
     if (nextBtn) nextBtn.addEventListener('click', resetZoomPan);
