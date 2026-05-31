@@ -256,16 +256,20 @@ input, textarea, select { font-family: var(--font-body); }
 .a4-viewport.can-pan    { cursor: grab; }
 .a4-viewport.is-panning { cursor: grabbing !important; }
 
-/* a4-frame — real rendered size, grows with zoom level */
+/* a4-frame — physically expands with zoom level.
+   At 100% it fills the viewport exactly (width/height: 100%).
+   JS sets explicit px dimensions when zoomed, so all child elements
+   that use % or calc(var(--a4-w) * ratio) scale proportionally —
+   no transform needed, full rendering fidelity at every zoom level. */
 .a4-frame {
   background: var(--surface);
   box-shadow: var(--shadow-page);
   position: relative;
-  /* Size is set by JS via --zoom-scale; default 100% of viewport */
   width: 100%;
   height: 100%;
+  /* Prevent the viewport's flexbox from squishing the frame */
+  flex-shrink: 0;
   transition: background var(--transition), box-shadow var(--transition);
-  /* No overflow: hidden — page-stage fills it completely */
   overflow: hidden;
 }
 
