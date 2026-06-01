@@ -21,6 +21,7 @@
   const pageStage     = document.getElementById('pageStage');
   const a4Frame       = document.getElementById('a4Frame');
   const pageLabelNum  = document.getElementById('pageLabelNum');
+  const pageLabelRow  = pageLabelNum?.closest('.page-label-row') || null;
   const bookNav       = document.getElementById('bookNav');
   const prevBtn       = document.getElementById('prevBtn');
   const nextBtn       = document.getElementById('nextBtn');
@@ -910,12 +911,14 @@
       if (multiMode) {
         singleViewWrap.style.display = 'none';
         multiViewWrap.style.display  = 'flex';
+        if (pageLabelRow) pageLabelRow.style.visibility = 'hidden';
         // Snap currentIdx to nearest spread boundary
         currentIdx = Math.floor(currentIdx / PAGES_PER_SPREAD) * PAGES_PER_SPREAD;
         renderMultiSpread();
       } else {
         multiViewWrap.style.display  = 'none';
         singleViewWrap.style.display = 'flex';
+        if (pageLabelRow) pageLabelRow.style.visibility = 'visible';
         renderPage(getActivePages()[currentIdx]);
       }
       updateNav(getActivePages().length);
@@ -965,22 +968,36 @@
     viewport.appendChild(frame);
     cell.appendChild(viewport);
 
-    // Set A4 CSS vars on frame so layouts render correctly.
-    // Use ResizeObserver so vars stay accurate when the grid is first painted
-    // and whenever the window resizes (multi-mode pages are smaller than single).
+    // Set A4 CSS vars on frame. The viewport uses aspect-ratio so its height
+    // may not be resolved synchronously. We use getBoundingClientRect (which
+    // forces a layout flush) inside a double-RAF, then keep watching with
+    // ResizeObserver so zoom/resize stays accurate.
     function updateCellVars() {
-      const w = viewport.offsetWidth;
-      const h = viewport.offsetHeight;
+      const rect = viewport.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
       if (w > 0 && h > 0) {
         frame.style.setProperty('--a4-w', w + 'px');
         frame.style.setProperty('--a4-h', h + 'px');
+      } else {
+        // Fallback: derive from cell width since aspect-ratio might not have resolved
+        const cw = cell.getBoundingClientRect().width;
+        if (cw > 0) {
+          const ch = cw * 1.4142;
+          frame.style.setProperty('--a4-w', cw + 'px');
+          frame.style.setProperty('--a4-h', ch + 'px');
+        }
       }
     }
-    // Immediate + deferred to catch layout paint
-    requestAnimationFrame(() => { updateCellVars(); requestAnimationFrame(updateCellVars); });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      updateCellVars();
+      // One more deferred pass in case grid layout still settling
+      setTimeout(updateCellVars, 50);
+    }));
     if (typeof ResizeObserver !== 'undefined') {
       const cellRO = new ResizeObserver(updateCellVars);
       cellRO.observe(viewport);
+      cellRO.observe(cell);
     }
     window.addEventListener('resize', updateCellVars);
 
