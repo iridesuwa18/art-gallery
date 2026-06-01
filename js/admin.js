@@ -271,6 +271,7 @@ if (addSectionBtn) {
       description: ''
     });
     renderSectionsList();
+    renderPagesList();   // refresh page section dropdowns
     scheduleAutosave();
   });
 }
@@ -340,8 +341,13 @@ function buildSectionFolder(sec, index) {
   // Delete
   folder.querySelector('.delete-section-btn').addEventListener('click', e => {
     e.stopPropagation();
+    // Clear sectionId on any pages that belonged to this section
+    (localConfig.pages || []).forEach(p => {
+      if (p.sectionId === sec.id) p.sectionId = null;
+    });
     localConfig.sections = (localConfig.sections || []).filter(s => s.id !== sec.id);
     renderSectionsList();
+    renderPagesList();   // refresh page section dropdowns
     scheduleAutosave();
   });
 
@@ -437,6 +443,9 @@ function buildPageFolder(page, index) {
 
   rebuildPageSettings();
 
+  // ── Section assignment row ──────────────────────────────────
+  const sectionAssignRow = buildSectionAssignRow(page);
+
   layoutSelect.addEventListener('change', () => {
     page.layout = layoutSelect.value;
     rebuildPageSettings();
@@ -457,8 +466,9 @@ function buildPageFolder(page, index) {
     artworksList.appendChild(buildArtworkRow(art, page, ai));
   });
 
-  // Inject page settings before artwork list
+  // Inject section assign + page settings before artwork list
   const folderBody = folder.querySelector('.page-folder-body');
+  folderBody.insertBefore(sectionAssignRow, artworksList);
   folderBody.insertBefore(pageSettingsWrap, artworksList);
 
   // Add artwork button
@@ -472,6 +482,53 @@ function buildPageFolder(page, index) {
   });
 
   return folder;
+}
+
+// ─── SECTION ASSIGNMENT ROW ───────────────────────────────────
+// Builds a compact "Section" dropdown row that lives at the top of each
+// page folder body. Only rendered when at least one section exists.
+function buildSectionAssignRow(page) {
+  const wrap = document.createElement('div');
+  wrap.className = 'page-setting-row section-assign-row';
+
+  const sections = localConfig.sections || [];
+
+  if (sections.length === 0) {
+    // No sections yet — show a faint hint
+    wrap.style.display = 'none';
+    return wrap;
+  }
+
+  const lbl = document.createElement('span');
+  lbl.className = 'page-setting-label';
+  lbl.textContent = 'Section';
+
+  const sel = document.createElement('select');
+  sel.className = 'page-setting-select section-assign-select';
+
+  // "Unassigned" option
+  const unassigned = document.createElement('option');
+  unassigned.value = '';
+  unassigned.textContent = '— Unassigned —';
+  sel.appendChild(unassigned);
+
+  sections.forEach(sec => {
+    const opt = document.createElement('option');
+    opt.value = sec.id;
+    opt.textContent = sec.name || sec.id;
+    sel.appendChild(opt);
+  });
+
+  sel.value = page.sectionId || '';
+
+  sel.addEventListener('change', () => {
+    page.sectionId = sel.value || null;
+    scheduleAutosave();
+  });
+
+  wrap.appendChild(lbl);
+  wrap.appendChild(sel);
+  return wrap;
 }
 
 // ─── SETTING ROW HELPERS ──────────────────────────────────
