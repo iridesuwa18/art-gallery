@@ -2040,6 +2040,18 @@ select.panel-input { cursor: pointer; }
 }
 
 /* ─── SECTION EDITOR (inside admin panel) ───────────────── */
+/* Section assign row — sits at top of page folder body */
+.section-assign-row {
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  margin-bottom: 2px;
+}
+.section-assign-select {
+  font-size: 10.5px;
+  max-width: 130px;
+}
+
 .sections-accordion {
   display: flex;
   flex-direction: column;
