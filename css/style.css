@@ -2216,7 +2216,7 @@ select.panel-input { cursor: pointer; }
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1.4142;
-  overflow: auto;
+  overflow: hidden;   /* not auto — prevents the chicken-and-egg sizing loop */
   scrollbar-width: none;
   -ms-overflow-style: none;
   cursor: default;
