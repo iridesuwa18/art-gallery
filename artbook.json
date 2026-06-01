@@ -120,6 +120,11 @@
       "id": "sec_1780304313215",
       "name": "Main Gallery",
       "description": "The gallery with experimental art"
+    },
+    {
+      "id": "sec_1780353968327",
+      "name": "New Section",
+      "description": ""
     }
   ]
 }
