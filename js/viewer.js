@@ -185,10 +185,12 @@
 
   function getActivePages() {
     const sections = artbook?.sections || [];
-    if (sections.length === 0) return artbook?.pages || [];
+    const allPages = artbook?.pages || [];
+    if (sections.length === 0) return allPages;
     const sec = sections[activeSectionIdx];
     if (!sec) return [];
-    return sec.pages || [];
+    // Filter the master pages array by sectionId so page order is preserved
+    return allPages.filter(p => p.sectionId === sec.id);
   }
 
   // ─── INIT ──────────────────────────────────────────────────
