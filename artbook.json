@@ -303,7 +303,19 @@
     {
       "id": "page_1780733128473",
       "layout": "large",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733184065",
+          "url": "/api/img?f=keaton-character-sheet.jpg",
+          "title": "Keaton Character Sheet",
+          "date": "2026-03-09",
+          "description": "Keaton Fort Character sheet",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
