@@ -1489,13 +1489,14 @@ async function renameRepoImage(oldName, oldSha, newName) {
   const ghHeaders = buildGhHeaders(token);
   const jsonHeaders = { ...ghHeaders, 'Content-Type': 'application/json' };
 
-  // 1. Fetch file content
+  // 1. Fetch file content (also grab fresh SHA — directory listing SHA can differ from contents API SHA)
   const getRes = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/contents/images/${encodeURIComponent(oldName)}?ref=${branch}`,
     { headers: ghHeaders }
   );
   if (!getRes.ok) throw new Error('Could not fetch file for rename');
   const fileData = await getRes.json();
+  const freshSha = fileData.sha;
   const content = fileData.content.replace(/\n/g, '');
 
   // 2. Create file under new name
@@ -1518,7 +1519,7 @@ async function renameRepoImage(oldName, oldSha, newName) {
     {
       method: 'DELETE',
       headers: jsonHeaders,
-      body: JSON.stringify({ message: `[artbook] Rename (delete old) ${oldName}`, sha: oldSha, branch })
+      body: JSON.stringify({ message: `[artbook] Rename (delete old) ${oldName}`, sha: freshSha, branch })
     }
   );
   if (!deleteRes.ok) throw new Error('Renamed file created but could not delete old one');
