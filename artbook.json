@@ -139,7 +139,8 @@
       "largeTextAlign": "center",
       "largeTextRatio": 0.05,
       "floodHeightRatio": 0.39,
-      "floodTextScale": 1.74
+      "floodTextScale": 1.74,
+      "floodCorner": "br"
     }
   ],
   "sections": [
