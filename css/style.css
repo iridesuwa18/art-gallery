@@ -384,7 +384,7 @@ input, textarea, select { font-family: var(--font-body); }
 .layout-flood .artwork-flood img {
   width: 100%;
   height: 100%;
-  object-fit: var(--flood-img-fit, cover);
+  object-fit: cover;
 }
 
 /* Caption box: position anchored by corner class.
@@ -1399,6 +1399,28 @@ select.panel-input { cursor: pointer; }
 }
 .fv-action-btn:hover { border-color: var(--text-mid); color: var(--text); background: var(--bg); }
 .fv-action-btn.danger:hover { border-color: var(--danger); color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.fv-action-btn.primary { border-color: var(--accent, #555); color: var(--accent, #555); }
+.fv-action-btn.primary:hover { background: color-mix(in srgb, var(--accent, #555) 8%, transparent); }
+
+.fv-rename-wrap {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding: 0 2px;
+}
+.fv-rename-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 10.5px;
+  font-family: var(--font-body);
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+.fv-rename-input:focus { border-color: var(--text-mid); }
 
 /* ─── EDIT ARTWORK MODAL ─────────────────────────────────── */
 .edit-art-modal { width: min(420px, 96vw); }
