@@ -541,7 +541,20 @@
     {
       "id": "page_1780733885422",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733927434",
+          "url": "/api/img?f=velo-character-sheet.jpg",
+          "title": "Velo Character Sheet",
+          "date": "2026-03-26",
+          "description": "Velo Roads Character Sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
