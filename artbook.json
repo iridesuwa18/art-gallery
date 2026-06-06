@@ -441,7 +441,20 @@
     {
       "id": "page_1780733552104",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733622727",
+          "url": "/api/img?f=bond-character-sheet.jpg",
+          "title": "Bond Character Sheet",
+          "date": "2026-03-16",
+          "description": "Bond Bridge Character Sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
