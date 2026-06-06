@@ -322,7 +322,20 @@
     {
       "id": "page_1780733191333",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733240756",
+          "url": "/api/img?f=yura-character-sheet.jpg",
+          "title": "Yura Character Sheet",
+          "date": "2026-03-10",
+          "description": "Yura Nakamata Character Sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
