@@ -596,6 +596,11 @@
       ],
       "sectionId": "sec_1780734563833",
       "subsectionId": "sub_1780734712356"
+    },
+    {
+      "id": "page_1780734789923",
+      "layout": "large",
+      "artworks": []
     }
   ],
   "sections": [
@@ -621,12 +626,6 @@
           "name": "Chapter 1"
         }
       ]
-    },
-    {
-      "id": "sec_1780734787560",
-      "name": "New Section",
-      "description": "",
-      "subsections": []
     }
   ]
 }
