@@ -934,7 +934,20 @@
     {
       "id": "page_1780735717726",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780735757092",
+          "url": "/api/img?f=chapter1-page20.jpg",
+          "title": "Chapter 1 Page 20",
+          "date": "2026-06-06",
+          "description": "",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780734563833",
       "subsectionId": "sub_1780734712356"
     }
