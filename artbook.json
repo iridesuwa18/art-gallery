@@ -121,12 +121,19 @@
     {
       "id": "sec_1780304313215",
       "name": "Main Gallery",
-      "description": "The gallery with experimental art"
+      "description": "The gallery with experimental art",
+      "subsections": [
+        {
+          "id": "sub_1780727124424",
+          "name": "New Subsection"
+        }
+      ]
     },
     {
       "id": "sec_1780353968327",
       "name": "Character Designs (Null Corps)",
-      "description": "Character designs I have done for a series called Null Corps."
+      "description": "Character designs I have done for a series called Null Corps.",
+      "subsections": []
     }
   ]
 }
