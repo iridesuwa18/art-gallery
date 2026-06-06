@@ -596,7 +596,12 @@
       "id": "sec_1780734563833",
       "name": "Null Corps Manga",
       "description": "Manga series for my original work called \"Null Corps\"",
-      "subsections": []
+      "subsections": [
+        {
+          "id": "sub_1780734712356",
+          "name": "New Subsection"
+        }
+      ]
     }
   ]
 }
