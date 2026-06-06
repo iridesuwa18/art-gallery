@@ -283,7 +283,20 @@
     {
       "id": "page_1780733073547",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733121138",
+          "url": "/api/img?f=nono-character-sheet.jpg",
+          "title": "Nono Character Sheet",
+          "date": "2026-03-08",
+          "description": "Nono Himono Character sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
