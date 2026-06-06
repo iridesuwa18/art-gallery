@@ -658,7 +658,7 @@
     },
     {
       "id": "page_1780735017323",
-      "layout": "large",
+      "layout": "flood",
       "artworks": [
         {
           "id": "art_1780735058079",
@@ -677,7 +677,7 @@
     },
     {
       "id": "page_1780735064588",
-      "layout": "large",
+      "layout": "flood",
       "artworks": []
     }
   ],
