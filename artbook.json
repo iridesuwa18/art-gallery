@@ -402,7 +402,20 @@
     {
       "id": "page_1780733435558",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733482825",
+          "url": "/api/img?f=kairocharactersheet.jpg",
+          "title": "Kairo Character Sheet",
+          "date": "2026-03-14",
+          "description": "Kairo Flames Character sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
