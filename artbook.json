@@ -581,7 +581,19 @@
     {
       "id": "page_1780734737988",
       "layout": "large",
-      "artworks": []
+      "artworks": [
+        {
+          "id": "art_1780734767222",
+          "url": "/api/img?f=chapter1-page2.jpg",
+          "title": "Chapter 1 Page 2",
+          "date": "2026-06-06",
+          "description": "",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ]
     }
   ],
   "sections": [
