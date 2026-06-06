@@ -121,7 +121,19 @@
     {
       "id": "page_1780728774829",
       "layout": "large",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780729140848",
+          "url": "/api/img?f=kawai-character-sheet.jpg",
+          "title": "Kawai Character Sheet",
+          "date": "2026-02-28",
+          "description": "Kawai Kiyomi's Character sheet",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null,
       "largeTextAlign": "center"
