@@ -461,7 +461,20 @@
     {
       "id": "page_1780733629560",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733694973",
+          "url": "/api/img?f=eira-character-sheet.jpg",
+          "title": "Eira Character Sheet",
+          "date": "2026-03-17",
+          "description": "Eira Lockwood Character sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
