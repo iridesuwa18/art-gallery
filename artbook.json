@@ -481,7 +481,20 @@
     {
       "id": "page_1780733711123",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733751590",
+          "url": "/api/img?f=norman-character-sheet.jpg",
+          "title": "Norman Character Sheet",
+          "date": "2026-03-18",
+          "description": "Norman Grando Character Sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
