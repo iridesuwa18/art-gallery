@@ -145,7 +145,19 @@
     {
       "id": "page_1780730112853",
       "layout": "large",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780731122612",
+          "url": "/api/img?f=kana-character-sheet.jpg",
+          "title": "Kana Character Sheet",
+          "date": "2026-03-01",
+          "description": "Kana Kiyomi's Character sheet",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
