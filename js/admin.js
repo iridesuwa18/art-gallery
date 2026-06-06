@@ -1101,7 +1101,7 @@ function closeUploadModal() { uploadOverlay.style.display = 'none'; }
 
 uploadClose.addEventListener('click', closeUploadModal);
 uploadCancel.addEventListener('click', closeUploadModal);
-uploadOverlay.addEventListener('click', e => { if (e.target === uploadOverlay) closeUploadModal(); });
+
 
 // File picker
 browseBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
