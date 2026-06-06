@@ -1366,8 +1366,86 @@ function buildFvItem(file) {
   name.textContent = file.name;
   name.title = file.name;
 
+  // Inline rename UI (hidden until Rename is clicked)
+  const renameWrap = document.createElement('div');
+  renameWrap.className = 'fv-rename-wrap';
+  renameWrap.style.display = 'none';
+
+  const renameInput = document.createElement('input');
+  renameInput.className = 'fv-rename-input';
+  renameInput.type = 'text';
+  renameInput.spellcheck = false;
+
+  const renameSaveBtn = document.createElement('button');
+  renameSaveBtn.className = 'fv-action-btn primary';
+  renameSaveBtn.textContent = '✓';
+  renameSaveBtn.title = 'Save';
+
+  const renameCancelBtn = document.createElement('button');
+  renameCancelBtn.className = 'fv-action-btn';
+  renameCancelBtn.textContent = '✕';
+  renameCancelBtn.title = 'Cancel';
+
+  renameWrap.appendChild(renameInput);
+  renameWrap.appendChild(renameSaveBtn);
+  renameWrap.appendChild(renameCancelBtn);
+
+  function enterRenameMode() {
+    const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '';
+    const base = file.name.slice(0, file.name.length - ext.length);
+    renameInput.value = base;
+    renameInput.dataset.ext = ext;
+    name.style.display = 'none';
+    renameWrap.style.display = 'flex';
+    actions.style.display = 'none';
+    renameInput.focus();
+    renameInput.select();
+  }
+
+  function exitRenameMode() {
+    renameWrap.style.display = 'none';
+    name.style.display = '';
+    actions.style.display = '';
+  }
+
+  async function doRename() {
+    const ext = renameInput.dataset.ext || '';
+    const newBase = renameInput.value.trim().replace(/[/\\?%*:|"<>]/g, '-');
+    if (!newBase) return;
+    const newName = newBase + ext;
+    if (newName === file.name) { exitRenameMode(); return; }
+
+    renameSaveBtn.disabled = true;
+    renameCancelBtn.disabled = true;
+    renameSaveBtn.textContent = '…';
+
+    const ok = await renameRepoImage(file.name, newName, file.sha);
+    if (ok) {
+      file.name = newName;
+      name.textContent = newName;
+      name.title = newName;
+      exitRenameMode();
+    } else {
+      renameSaveBtn.disabled = false;
+      renameCancelBtn.disabled = false;
+      renameSaveBtn.textContent = '✓';
+    }
+  }
+
+  renameSaveBtn.addEventListener('click', e => { e.stopPropagation(); doRename(); });
+  renameCancelBtn.addEventListener('click', e => { e.stopPropagation(); exitRenameMode(); });
+  renameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); doRename(); }
+    if (e.key === 'Escape') exitRenameMode();
+  });
+
   const actions = document.createElement('div');
   actions.className = 'fv-actions';
+
+  const renameBtn = document.createElement('button');
+  renameBtn.className = 'fv-action-btn';
+  renameBtn.textContent = 'Rename';
+  renameBtn.addEventListener('click', e => { e.stopPropagation(); enterRenameMode(); });
 
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'fv-action-btn danger';
@@ -1378,9 +1456,11 @@ function buildFvItem(file) {
     deleteRepoImage(file.name, file.sha).then(() => loadFileViewer());
   });
 
+  actions.appendChild(renameBtn);
   actions.appendChild(deleteBtn);
   item.appendChild(img);
   item.appendChild(name);
+  item.appendChild(renameWrap);
   item.appendChild(actions);
   return item;
 }
@@ -1399,6 +1479,53 @@ async function deleteRepoImage(filename, sha) {
     if (!res.ok) throw new Error('Delete failed');
   } catch(e) {
     alert('Delete failed: ' + e.message);
+  }
+}
+
+async function renameRepoImage(oldName, newName, sha) {
+  const { owner, repo, branch, token } = ghCredentials;
+  const ghHeaders = { ...buildGhHeaders(token), 'Content-Type': 'application/json' };
+
+  try {
+    // 1. Fetch the file content (base64) using the known sha
+    const getRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/images/${encodeURIComponent(oldName)}?ref=${branch}`,
+      { headers: ghHeaders }
+    );
+    if (!getRes.ok) throw new Error('Could not fetch file for rename');
+    const fileData = await getRes.json();
+    const content = fileData.content; // already base64, may have newlines
+
+    // 2. Create file at new path
+    const putRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/images/${encodeURIComponent(newName)}`,
+      {
+        method: 'PUT',
+        headers: ghHeaders,
+        body: JSON.stringify({
+          message: `[artbook] Rename ${oldName} → ${newName}`,
+          content: content.replace(/\n/g, ''),
+          branch
+        })
+      }
+    );
+    if (!putRes.ok) throw new Error('Could not create renamed file');
+
+    // 3. Delete old file
+    const delRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/images/${encodeURIComponent(oldName)}`,
+      {
+        method: 'DELETE',
+        headers: ghHeaders,
+        body: JSON.stringify({ message: `[artbook] Remove ${oldName} after rename`, sha, branch })
+      }
+    );
+    if (!delRes.ok) throw new Error('Renamed but could not delete old file');
+
+    return true;
+  } catch(e) {
+    alert('Rename failed: ' + e.message);
+    return false;
   }
 }
 
