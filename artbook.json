@@ -137,7 +137,8 @@
       "sectionId": "sec_1780353968327",
       "subsectionId": null,
       "largeTextAlign": "center",
-      "largeTextRatio": 0.05
+      "largeTextRatio": 0.05,
+      "floodHeightRatio": 0.12
     }
   ],
   "sections": [
