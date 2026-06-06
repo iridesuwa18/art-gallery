@@ -124,12 +124,7 @@
       "id": "sec_1780304313215",
       "name": "Main Gallery",
       "description": "The gallery with experimental art",
-      "subsections": [
-        {
-          "id": "sub_1780727124424",
-          "name": "Test"
-        }
-      ]
+      "subsections": []
     },
     {
       "id": "sec_1780353968327",
