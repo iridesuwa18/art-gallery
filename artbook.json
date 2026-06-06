@@ -185,7 +185,19 @@
     {
       "id": "page_1780731527812",
       "layout": "large",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780731610512",
+          "url": "/api/img?f=darchecharactersheet.jpg",
+          "title": "Darche Character Sheet",
+          "date": "2026-03-02",
+          "description": "Darche von Fierst Character sheet",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
