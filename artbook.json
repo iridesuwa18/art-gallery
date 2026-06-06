@@ -164,7 +164,20 @@
     {
       "id": "page_1780731376951",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780731474197",
+          "url": "/api/img?f=valche-character-sheet.jpg",
+          "title": "Valche Character Sheet",
+          "date": "2026-03-03",
+          "description": "Valche von Fierst Character sheet",
+          "textPosition": "right",
+          "focalX": 51.07842838062959,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
