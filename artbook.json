@@ -621,6 +621,12 @@
           "name": "Chapter 1"
         }
       ]
+    },
+    {
+      "id": "sec_1780734787560",
+      "name": "New Section",
+      "description": "",
+      "subsections": []
     }
   ]
 }
