@@ -245,7 +245,19 @@
     {
       "id": "page_1780732918280",
       "layout": "large",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780732986707",
+          "url": "/api/img?f=goro-character-sheet.jpg",
+          "title": "Goro Character Sheet",
+          "date": "2026-03-06",
+          "description": "Goro Character sheet",
+          "textPosition": "right",
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
