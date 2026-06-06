@@ -138,7 +138,8 @@
       "subsectionId": null,
       "largeTextAlign": "center",
       "largeTextRatio": 0.05,
-      "floodHeightRatio": 0.16
+      "floodHeightRatio": 0.16,
+      "floodTextScale": 1.74
     }
   ],
   "sections": [
