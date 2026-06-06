@@ -521,7 +521,20 @@
     {
       "id": "page_1780733823541",
       "layout": "flood",
-      "artworks": [],
+      "artworks": [
+        {
+          "id": "art_1780733878114",
+          "url": "/api/img?f=duragooncharactersheet.jpg",
+          "title": "Duragoon Character Sheet",
+          "date": "2026-03-24",
+          "description": "Duragoon Claides Character Sheet",
+          "textPosition": "right",
+          "focalX": 50,
+          "concept": {
+            "timer": "30 min"
+          }
+        }
+      ],
       "sectionId": "sec_1780353968327",
       "subsectionId": null
     }
